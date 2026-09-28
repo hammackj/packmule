@@ -3,6 +3,11 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import type { SettingsUpdate } from '../shared/types'
 import { Manager } from './manager'
 
+// Pin the data dir so it doesn't depend on how Electron was launched
+// (running out/main/index.js directly would otherwise use ~/.config/Electron).
+app.setName('wow-addon-mgr')
+app.setPath('userData', path.join(app.getPath('appData'), 'wow-addon-mgr'))
+
 const manager = new Manager()
 let win: BrowserWindow | null = null
 
