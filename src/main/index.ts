@@ -7,6 +7,8 @@ import { Manager } from './manager'
 // (running out/main/index.js directly would otherwise use ~/.config/Electron).
 app.setName('wow-addon-mgr')
 app.setPath('userData', path.join(app.getPath('appData'), 'wow-addon-mgr'))
+// Must match packaging/wow-addon-mgr.desktop so the taskbar pairs the window with its icon.
+if (process.platform === 'linux') app.setDesktopName('wow-addon-mgr.desktop')
 
 const manager = new Manager()
 let win: BrowserWindow | null = null
@@ -20,6 +22,7 @@ function createWindow(): void {
     title: 'WoW Addon Manager',
     backgroundColor: '#15171c',
     autoHideMenuBar: true,
+    icon: path.join(__dirname, '../../packaging/wow-addon-mgr-256.png'),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,

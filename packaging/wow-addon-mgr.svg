@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <!-- An arrow dropping into a tray over the word "Addons": what the app does,
+       in a shape that still reads at 32px where the word itself blurs out.
+
+       Colours are the app's own: the dark background and the gold accent from
+       styles.css, so the launcher and the window agree. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1d2027"/>
+      <stop offset="100%" stop-color="#15171c"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="8" y="8" width="240" height="240" rx="44" fill="url(#bg)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="43.5"
+        fill="none" stroke="#323744" stroke-width="3"/>
+
+  <!-- Download arrow: shaft and head as one path so the join is clean. -->
+  <path d="M116 40 h24 v52 h26 l-38 42 l-38 -42 h26 z" fill="#d4a73c"/>
+
+  <!-- Tray the arrow lands in. -->
+  <path d="M64 118 v26 a8 8 0 0 0 8 8 h112 a8 8 0 0 0 8 -8 v-26"
+        fill="none" stroke="#e6e2d6" stroke-width="12"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <text x="128" y="206"
+        font-family="'DejaVu Sans', 'Liberation Sans', Arial, Helvetica, sans-serif"
+        font-size="44" font-weight="700" letter-spacing="1"
+        text-anchor="middle" fill="#d4a73c">Addons</text>
+</svg>

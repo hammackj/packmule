@@ -32,3 +32,13 @@ etc., then pick the game client from the dropdown.
   Missing folders are detected and can be repaired.
 - **State:** `~/.config/wow-addon-mgr/state.json`. The optional GitHub token is
   encrypted with Electron `safeStorage` when a keyring is available.
+
+## Desktop launcher (Linux)
+
+```sh
+./packaging/install-launcher.sh
+```
+
+Installs the icon, a menu entry, and a desktop shortcut for the current user.
+The launcher rebuilds automatically when `src/` is newer than the last build.
+Re-run it after moving the repo.

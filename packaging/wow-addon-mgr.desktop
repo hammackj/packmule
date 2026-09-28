@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=WoW Addon Manager
+GenericName=Addon Manager
+Comment=Install and update World of Warcraft addons from GitHub releases
+Exec=__REPO__/packaging/wow-addon-mgr-launch.sh
+Icon=wow-addon-mgr
+Terminal=false
+Categories=Game;
+Keywords=wow;warcraft;addon;addons;forever;
+StartupWMClass=wow-addon-mgr
+StartupNotify=true
