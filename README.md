@@ -1,7 +1,8 @@
 # WoW Addon Manager
 
 A small Electron app that installs and updates World of Warcraft addons from
-**GitHub releases only**. Paste a repo URL, it installs; that's the whole model.
+**GitHub releases** and **CurseForge**. Paste a repo or addon URL, it installs;
+that's the whole model.
 
 ## Run
 
@@ -21,6 +22,12 @@ etc., then pick the game client from the dropdown.
   client's interface number (read from `.build.info`, e.g. `1.60.1` → `16001`
   for WoW Forever). Otherwise falls back to the first non-`-nolib` zip.
   Source-only repos without a packaged zip are rejected.
+- **CurseForge:** paste a `curseforge.com/wow/addons/<slug>` URL. Needs a free
+  API key from [console.curseforge.com](https://console.curseforge.com) (Settings).
+  Picks the newest *release* file tagged for the client's game version (e.g.
+  `1.60.1`), falling back to the same major.minor with a warning; never to
+  another flavor. Updates are detected by file id. Addons whose authors disable
+  third-party downloads can't be installed this way; the app links to the page.
 - **Install:** download and extract into `<client>/.wow-addon-mgr-tmp/`, find
   top-level folders containing a `.toc`, then swap them into `Interface/AddOns`
   via renames. Old folders are restored if anything fails. Zips containing
@@ -30,8 +37,8 @@ etc., then pick the game client from the dropdown.
 - **Updates:** checked on launch and every N hours (Settings), using ETags so
   unchanged repos don't consume GitHub rate limit. Optional auto-install.
   Missing folders are detected and can be repaired.
-- **State:** `~/.config/wow-addon-mgr/state.json`. The optional GitHub token is
-  encrypted with Electron `safeStorage` when a keyring is available.
+- **State:** `~/.config/wow-addon-mgr/state.json`. The GitHub token and
+  CurseForge key are encrypted with Electron `safeStorage` when a keyring is available.
 
 ## Desktop launcher (Linux)
 

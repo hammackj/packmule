@@ -34,7 +34,7 @@ export function parseRepo(input: string): string {
   const match =
     trimmed.match(/^(?:https?:\/\/)?(?:www\.)?github\.com\/([\w.-]+)\/([\w.-]+)/i) ??
     trimmed.match(/^([\w.-]+)\/([\w.-]+)$/)
-  if (!match) throw new Error(`Not a GitHub repository: ${input}`)
+  if (!match) throw new Error(`Not a GitHub repository or CurseForge addon URL: ${input}`)
   return `${match[1]}/${match[2]}`
 }
 

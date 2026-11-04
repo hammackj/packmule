@@ -1,13 +1,15 @@
 import { EventEmitter } from 'node:events'
 import type { AddonRecord, AddonView, AppState, GameInstall, LogEntry, Settings } from '../shared/types'
+import { CurseForgeClient, parseCurseForgeUrl } from './curseforge'
 import { addonsDir, detectInstalls } from './game'
-import { GitHubClient, parseRepo } from './github'
+import { GitHubClient, parseRepo, type ReleaseAsset } from './github'
 import { installAsset, listAddonFolders, removeFolders, verifyFolders } from './installer'
 import { Store } from './store'
 
 export class Manager extends EventEmitter {
   private store = new Store()
   private github = new GitHubClient(() => this.store.token)
+  private curseforge = new CurseForgeClient(() => this.store.curseforgeKey)
   private installs: GameInstall[] = []
   private pathError: string | null = null
   private busy = new Set<string>()
@@ -96,7 +98,12 @@ export class Manager extends EventEmitter {
       let status: AddonView['status'] = 'unknown'
       if (!r.installedTag) status = 'not-installed'
       else if (!(await verifyFolders(this.addonsPath, r.folders))) status = 'missing-files'
-      else if (r.latestTag && r.latestTag !== r.installedTag) status = 'update-available'
+      else if (r.source === 'curseforge') {
+        // Display names can repeat across uploads; file ids can't.
+        if (r.latestAssetId != null) {
+          status = r.latestAssetId !== r.installedAssetId ? 'update-available' : 'up-to-date'
+        }
+      } else if (r.latestTag && r.latestTag !== r.installedTag) status = 'update-available'
       else if (r.latestTag) status = 'up-to-date'
       addons.push({ ...r, status, busy: this.busy.has(r.repo) })
     }
@@ -106,8 +113,9 @@ export class Manager extends EventEmitter {
 
     const { settings } = this.store
     return {
-      settings: { ...settings, githubToken: '' } satisfies Settings,
+      settings: { ...settings, githubToken: '', curseforgeApiKey: '' } satisfies Settings,
       hasToken: this.store.token !== '',
+      hasCurseForgeKey: this.store.curseforgeKey !== '',
       installs: this.installs,
       activeInstall: install,
       addons,
@@ -133,11 +141,24 @@ export class Manager extends EventEmitter {
     return install
   }
 
-  /** Fetches the latest release for a record and picks the right zip. */
-  private async resolveLatest(r: AddonRecord, install: GameInstall) {
-    const release = await this.github.latestRelease(r.repo)
-    const choice = await this.github.chooseAsset(release, install.interface)
-    r.latestTag = release.tag_name
+  /** Finds the newest build of a record for this client and records it as latest. */
+  private async resolveLatest(r: AddonRecord, install: GameInstall): Promise<{ asset: ReleaseAsset }> {
+    let tag: string
+    let choice: { asset: ReleaseAsset; compatWarning: string | null }
+    if (r.source === 'curseforge') {
+      const mod = r.modId ? await this.curseforge.mod(r.modId) : await this.curseforge.modBySlug(r.repo)
+      r.modId = mod.id
+      r.name = mod.name
+      const file = await this.curseforge.chooseFile(mod, install.version)
+      tag = file.tag
+      choice = file
+    } else {
+      const release = await this.github.latestRelease(r.repo)
+      choice = await this.github.chooseAsset(release, install.interface)
+      tag = release.tag_name
+    }
+    r.latestTag = tag
+    r.latestAssetId = choice.asset.id
     r.latestAssetName = choice.asset.name
     r.compatWarning = choice.compatWarning
     r.lastChecked = new Date().toISOString()
@@ -177,12 +198,14 @@ export class Manager extends EventEmitter {
   addAddon(url: string): Promise<AppState> {
     return this.serial(async () => {
       const install = this.requireInstall()
-      const repo = parseRepo(url)
+      const slug = parseCurseForgeUrl(url)
+      const repo = slug ?? parseRepo(url)
       if (this.records.some((r) => r.repo.toLowerCase() === repo.toLowerCase())) {
         throw new Error(`${repo} is already managed`)
       }
       const record: AddonRecord = {
         repo,
+        source: slug ? 'curseforge' : 'github',
         installedTag: null,
         installedAssetId: null,
         folders: [],

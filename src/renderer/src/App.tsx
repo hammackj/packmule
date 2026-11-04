@@ -17,6 +17,12 @@ function errorText(e: unknown): string {
   return String((e as Error)?.message ?? e).replace(/^Error invoking remote method '[^']+': (Error: )?/, '')
 }
 
+function addonPage(a: AddonView): string {
+  return a.source === 'curseforge'
+    ? `https://www.curseforge.com/wow/addons/${a.repo}`
+    : `https://github.com/${a.repo}`
+}
+
 function timeAgo(iso: string | null): string {
   if (!iso) return 'never'
   const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000)
@@ -113,7 +119,7 @@ export default function App(): React.JSX.Element {
 
       <form className="addbar" onSubmit={(e) => void add(e)}>
         <input
-          placeholder="https://github.com/owner/repo"
+          placeholder="https://github.com/owner/repo or https://www.curseforge.com/wow/addons/name"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           disabled={adding || !state.activeInstall}
@@ -126,8 +132,8 @@ export default function App(): React.JSX.Element {
       <main>
         {state.addons.length === 0 ? (
           <div className="empty">
-            No addons yet. Paste a GitHub repository URL above — it must publish packaged
-            releases (a .zip asset).
+            No addons yet. Paste a GitHub repository URL (it must publish packaged releases
+            with a .zip asset) or a CurseForge addon URL (needs an API key in Settings).
           </div>
         ) : (
           <table>
@@ -206,9 +212,12 @@ function AddonRow(props: {
   return (
     <tr>
       <td>
-        <button className="link repo" onClick={() => void window.api.openExternal(`https://github.com/${a.repo}`)}>
-          {a.repo}
+        <button className="link repo" onClick={() => void window.api.openExternal(addonPage(a))}>
+          {a.name ?? a.repo}
         </button>
+        <span className={`source ${a.source ?? 'github'}`}>
+          {a.source === 'curseforge' ? 'CurseForge' : 'GitHub'}
+        </span>
         {a.folders.length > 0 && <div className="muted small">{a.folders.join(', ')}</div>}
       </td>
       <td>{a.installedTag ?? '—'}</td>
