@@ -65,6 +65,15 @@ export interface AddonView extends AddonRecord {
   busy: boolean
 }
 
+/** An AddOns folder the app didn't install (e.g. unzipped by hand); never modified */
+export interface ManualAddon {
+  folder: string
+  /** From the folder's .toc; null if it has none */
+  title: string | null
+  version: string | null
+  author: string | null
+}
+
 export interface AppState {
   settings: Settings
   hasToken: boolean
@@ -73,7 +82,7 @@ export interface AppState {
   activeInstall: GameInstall | null
   addons: AddonView[]
   /** Folders in AddOns not owned by any managed addon */
-  unmanaged: string[]
+  unmanaged: ManualAddon[]
   checking: boolean
   lastCheck: string | null
   pathError: string | null

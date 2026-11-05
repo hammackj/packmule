@@ -1,10 +1,12 @@
 import { EventEmitter } from 'node:events'
+import path from 'node:path'
 import type { AddonRecord, AddonView, AppState, GameInstall, LogEntry, Settings } from '../shared/types'
 import { CurseForgeClient, parseCurseForgeUrl } from './curseforge'
 import { addonsDir, detectInstalls } from './game'
 import { GitHubClient, parseRepo, type ReleaseAsset } from './github'
 import { installAsset, listAddonFolders, removeFolders, verifyFolders } from './installer'
 import { Store } from './store'
+import { readTocInfo } from './toc'
 
 export class Manager extends EventEmitter {
   private store = new Store()
@@ -107,9 +109,14 @@ export class Manager extends EventEmitter {
       else if (r.latestTag) status = 'up-to-date'
       addons.push({ ...r, status, busy: this.busy.has(r.repo) })
     }
-    const unmanaged = install
-      ? (await listAddonFolders(this.addonsPath)).filter((f) => !owned.has(f))
-      : []
+    const unmanaged: AppState['unmanaged'] = []
+    if (install) {
+      const folders = (await listAddonFolders(this.addonsPath)).filter((f) => !owned.has(f) && !f.startsWith('.'))
+      for (const folder of folders.sort((a, b) => a.localeCompare(b))) {
+        const toc = await readTocInfo(path.join(this.addonsPath, folder), install.product)
+        unmanaged.push({ folder, ...toc })
+      }
+    }
 
     const { settings } = this.store
     return {

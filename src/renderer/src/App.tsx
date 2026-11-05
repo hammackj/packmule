@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { AddonStatus, AddonView, AppState, LogEntry } from '../../shared/types'
+import type { AddonStatus, AddonView, AppState, LogEntry, ManualAddon } from '../../shared/types'
 import Settings from './Settings'
 
 const api = window.api
@@ -130,7 +130,7 @@ export default function App(): React.JSX.Element {
       </form>
 
       <main>
-        {state.addons.length === 0 ? (
+        {state.addons.length === 0 && state.unmanaged.length === 0 ? (
           <div className="empty">
             No addons yet. Paste a GitHub repository URL (it must publish packaged releases
             with a .zip asset) or a CurseForge addon URL (needs an API key in Settings).
@@ -150,13 +150,17 @@ export default function App(): React.JSX.Element {
               {state.addons.map((a) => (
                 <AddonRow key={a.repo} addon={a} disabled={anyBusy} run={run} />
               ))}
+              {state.unmanaged.map((m) => (
+                <ManualRow key={m.folder} addon={m} />
+              ))}
             </tbody>
           </table>
         )}
 
         {state.unmanaged.length > 0 && (
           <p className="muted small">
-            Not managed here (left untouched): {state.unmanaged.join(', ')}
+            Manual addons were installed outside this app. They're listed so you can see them, but
+            never updated or deleted here.
           </p>
         )}
       </main>
@@ -197,6 +201,33 @@ export default function App(): React.JSX.Element {
         />
       )}
     </div>
+  )
+}
+
+function ManualRow({ addon: m }: { addon: ManualAddon }): React.JSX.Element {
+  const title = m.title ?? m.folder
+  return (
+    <tr className="manual">
+      <td>
+        <span className="repo">{title}</span>
+        <span className="source manual">Manual</span>
+        {(title !== m.folder || m.author) && (
+          <div className="muted small">
+            {[title !== m.folder ? m.folder : null, m.author].filter(Boolean).join(' · ')}
+          </div>
+        )}
+      </td>
+      <td>{m.version ?? '—'}</td>
+      <td className="muted">—</td>
+      <td>
+        {m.title === null && m.version === null ? (
+          <span className="warn-text small">No .toc file; the game won't load this folder</span>
+        ) : (
+          <span className="badge unknown">Not tracked</span>
+        )}
+      </td>
+      <td />
+    </tr>
   )
 }
 

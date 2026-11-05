@@ -139,6 +139,10 @@ button.link.repo:hover {
   color: var(--accent);
 }
 
+span.repo {
+  font-weight: 600;
+}
+
 input:focus,
 select:focus,
 button:focus-visible {
