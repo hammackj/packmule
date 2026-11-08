@@ -11,7 +11,15 @@ export interface ReleaseAsset {
 export interface Release {
   tag_name: string
   html_url: string
+  draft?: boolean
+  prerelease?: boolean
   assets: ReleaseAsset[]
+}
+
+/** "spoken/v3.8.4" -> "spoken/", "v1.2.3" -> "" */
+export function tagStream(tag: string): string {
+  const i = tag.lastIndexOf('/')
+  return i >= 0 ? tag.slice(0, i + 1) : ''
 }
 
 /** Shape of the release.json written by the BigWigsMods packager */
@@ -28,14 +36,20 @@ export interface AssetChoice {
   compatWarning: string | null
 }
 
-/** Accepts "owner/repo" or any github.com URL pointing into the repo. */
-export function parseRepo(input: string): string {
+/**
+ * Accepts "owner/repo" or any github.com URL pointing into the repo. A link to
+ * a release (".../releases/tag/spoken/v3.8.4") also selects that release's
+ * stream: tagPrefix is then set, and is "" for tags without a prefix.
+ */
+export function parseRepo(input: string): { repo: string; tagPrefix?: string } {
   const trimmed = input.trim().replace(/\.git$/, '').replace(/\/+$/, '')
   const match =
-    trimmed.match(/^(?:https?:\/\/)?(?:www\.)?github\.com\/([\w.-]+)\/([\w.-]+)/i) ??
+    trimmed.match(/^(?:https?:\/\/)?(?:www\.)?github\.com\/([\w.-]+)\/([\w.-]+)(?:\/releases\/tag\/(.+))?/i) ??
     trimmed.match(/^([\w.-]+)\/([\w.-]+)$/)
   if (!match) throw new Error(`Not a GitHub repository or CurseForge addon URL: ${input}`)
-  return `${match[1]}/${match[2]}`
+  const repo = `${match[1]}/${match[2]}`
+  if (!match[3]) return { repo }
+  return { repo, tagPrefix: tagStream(decodeURIComponent(match[3].split(/[?#]/)[0])) }
 }
 
 export class GitHubClient {
@@ -73,8 +87,28 @@ export class GitHubClient {
     return body
   }
 
-  latestRelease(repo: string): Promise<Release> {
-    return this.api<Release>(`/repos/${repo}/releases/latest`)
+  /**
+   * Newest published (non-draft, non-prerelease) release. With a tag prefix
+   * (including "" for unprefixed tags), only that stream counts: GitHub's
+   * /releases/latest is shared by every product a repo publishes.
+   */
+  async latestRelease(repo: string, tagPrefix?: string): Promise<Release> {
+    if (tagPrefix === undefined) return this.api<Release>(`/repos/${repo}/releases/latest`)
+    for (let page = 1; page <= 5; page++) {
+      const list = await this.api<Release[]>(`/repos/${repo}/releases?per_page=100&page=${page}`)
+      const hit = list.find((r) => !r.draft && !r.prerelease && tagStream(r.tag_name) === tagPrefix)
+      if (hit) return hit
+      if (list.length < 100) break
+    }
+    throw new Error(
+      tagPrefix ? `No published release with a tag starting "${tagPrefix}"` : 'No published release with an unprefixed tag'
+    )
+  }
+
+  /** Distinct tag streams among recent releases ("" = tags without a prefix). */
+  async releaseStreams(repo: string): Promise<string[]> {
+    const list = await this.api<Release[]>(`/repos/${repo}/releases?per_page=100`)
+    return [...new Set(list.filter((r) => !r.draft).map((r) => tagStream(r.tag_name)))]
   }
 
   private async manifest(asset: ReleaseAsset): Promise<PackagerManifest> {

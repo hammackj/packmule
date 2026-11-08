@@ -47,8 +47,8 @@ function registerIpc(): void {
   ipcMain.handle('state:get', () => manager.state())
   ipcMain.handle('settings:update', (_e, update: SettingsUpdate) => manager.updateSettings(update))
   ipcMain.handle('addon:add', (_e, url: string) => manager.addAddon(url))
-  ipcMain.handle('addon:remove', (_e, repo: string) => manager.removeAddon(repo))
-  ipcMain.handle('addon:install', (_e, repo: string) => manager.installAddon(repo))
+  ipcMain.handle('addon:remove', (_e, key: string) => manager.removeAddon(key))
+  ipcMain.handle('addon:install', (_e, key: string) => manager.installAddon(key))
   ipcMain.handle('addons:updateAll', () => manager.updateAll())
   ipcMain.handle('addons:check', () => manager.checkUpdates())
   ipcMain.handle('dialog:pickFolder', async () => {

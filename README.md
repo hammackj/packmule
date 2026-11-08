@@ -22,6 +22,12 @@ etc., then pick the game client from the dropdown.
   client's interface number (read from `.build.info`, e.g. `1.60.1` → `16001`
   for WoW Forever). Otherwise falls back to the first non-`-nolib` zip.
   Source-only repos without a packaged zip are rejected.
+- **Release streams:** some repos publish several products from one
+  repository, with tags like `spoken/v3.8.4` and `quests-audio/v2.5.0`, so
+  GitHub's single "latest release" is unreliable. Adding such a repo asks you
+  to paste a link to a release from the stream you want
+  (`.../releases/tag/spoken/v3.8.4`). The addon then follows only that stream,
+  ignoring drafts and prereleases. Each stream is a separate entry.
 - **CurseForge:** paste a `curseforge.com/wow/addons/<slug>` URL. Needs a free
   API key from [console.curseforge.com](https://console.curseforge.com) (Settings).
   Picks the newest *release* file tagged for the client's game version (e.g.

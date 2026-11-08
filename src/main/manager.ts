@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events'
 import path from 'node:path'
-import type { AddonRecord, AddonView, AppState, GameInstall, LogEntry, Settings } from '../shared/types'
+import { addonKey, type AddonRecord, type AddonView, type AppState, type GameInstall, type LogEntry, type Settings } from '../shared/types'
 import { CurseForgeClient, parseCurseForgeUrl } from './curseforge'
 import { addonsDir, detectInstalls } from './game'
 import { GitHubClient, parseRepo, type ReleaseAsset } from './github'
@@ -107,7 +107,7 @@ export class Manager extends EventEmitter {
         }
       } else if (r.latestTag && r.latestTag !== r.installedTag) status = 'update-available'
       else if (r.latestTag) status = 'up-to-date'
-      addons.push({ ...r, status, busy: this.busy.has(r.repo) })
+      addons.push({ ...r, status, busy: this.busy.has(addonKey(r)) })
     }
     const unmanaged: AppState['unmanaged'] = []
     if (install) {
@@ -160,7 +160,7 @@ export class Manager extends EventEmitter {
       tag = file.tag
       choice = file
     } else {
-      const release = await this.github.latestRelease(r.repo)
+      const release = await this.github.latestRelease(r.repo, r.tagPrefix)
       choice = await this.github.chooseAsset(release, install.interface)
       tag = release.tag_name
     }
@@ -174,11 +174,11 @@ export class Manager extends EventEmitter {
 
   private async install(r: AddonRecord): Promise<void> {
     const install = this.requireInstall()
-    this.busy.add(r.repo)
+    this.busy.add(addonKey(r))
     await this.changed()
     try {
       const { asset } = await this.resolveLatest(r, install)
-      this.log('info', `Installing ${r.repo} ${r.latestTag} (${asset.name})`)
+      this.log('info', `Installing ${addonKey(r)} ${r.latestTag} (${asset.name})`)
       const foreign = new Set(this.records.filter((o) => o !== r).flatMap((o) => o.folders))
       r.folders = await installAsset({
         addonsPath: this.addonsPath,
@@ -190,13 +190,13 @@ export class Manager extends EventEmitter {
       r.installedAssetId = asset.id
       r.installedAt = new Date().toISOString()
       r.error = null
-      this.log('info', `Installed ${r.repo} ${r.installedTag}: ${r.folders.join(', ')}`)
+      this.log('info', `Installed ${addonKey(r)} ${r.installedTag}: ${r.folders.join(', ')}`)
     } catch (e) {
       r.error = (e as Error).message
-      this.log('error', `${r.repo}: ${r.error}`)
+      this.log('error', `${addonKey(r)}: ${r.error}`)
       throw e
     } finally {
-      this.busy.delete(r.repo)
+      this.busy.delete(addonKey(r))
       await this.persist()
       await this.changed()
     }
@@ -206,13 +206,30 @@ export class Manager extends EventEmitter {
     return this.serial(async () => {
       const install = this.requireInstall()
       const slug = parseCurseForgeUrl(url)
-      const repo = slug ?? parseRepo(url)
-      if (this.records.some((r) => r.repo.toLowerCase() === repo.toLowerCase())) {
-        throw new Error(`${repo} is already managed`)
+      const gh = slug ? null : parseRepo(url)
+      const repo = slug ?? gh!.repo
+      let tagPrefix = gh?.tagPrefix
+      if (gh && tagPrefix === undefined) {
+        // Repos that publish several products (tags like "spoken/v1", "manager/v1")
+        // share one /releases/latest, so make the user pick a stream.
+        const streams = await this.github.releaseStreams(repo)
+        if (streams.length > 1) {
+          const names = streams.map((s) => s.replace(/\/$/, '') || '(no prefix)').join(', ')
+          throw new Error(
+            `${repo} publishes several release streams (${names}). Paste the link to a release ` +
+              `from the one you want, e.g. https://github.com/${repo}/releases/tag/<stream>/<version>`
+          )
+        }
+        if (streams.length === 1 && streams[0]) tagPrefix = streams[0]
+      }
+      const key = addonKey({ repo, tagPrefix })
+      if (this.records.some((r) => addonKey(r).toLowerCase() === key.toLowerCase())) {
+        throw new Error(`${key} is already managed`)
       }
       const record: AddonRecord = {
         repo,
         source: slug ? 'curseforge' : 'github',
+        ...(tagPrefix !== undefined ? { tagPrefix } : {}),
         installedTag: null,
         installedAssetId: null,
         folders: [],
@@ -227,30 +244,30 @@ export class Manager extends EventEmitter {
       await this.resolveLatest(record, install)
       this.records.push(record)
       await this.persist()
-      this.log('info', `Added ${repo}`)
+      this.log('info', `Added ${key}`)
       await this.install(record)
       return this.state()
     })
   }
 
-  removeAddon(repo: string): Promise<AppState> {
+  removeAddon(key: string): Promise<AppState> {
     return this.serial(async () => {
-      const r = this.records.find((x) => x.repo === repo)
+      const r = this.records.find((x) => addonKey(x) === key)
       if (!r) return this.state()
       await removeFolders(this.addonsPath, r.folders)
       await this.store.setAddons(
         this.store.settings.activeInstall,
         this.records.filter((x) => x !== r)
       )
-      this.log('info', `Removed ${repo} (${r.folders.join(', ') || 'no folders'})`)
+      this.log('info', `Removed ${key} (${r.folders.join(', ') || 'no folders'})`)
       return this.changed()
     })
   }
 
-  installAddon(repo: string): Promise<AppState> {
+  installAddon(key: string): Promise<AppState> {
     return this.serial(async () => {
-      const r = this.records.find((x) => x.repo === repo)
-      if (!r) throw new Error(`${repo} is not managed`)
+      const r = this.records.find((x) => addonKey(x) === key)
+      if (!r) throw new Error(`${key} is not managed`)
       await this.install(r)
       return this.state()
     })
@@ -262,7 +279,7 @@ export class Manager extends EventEmitter {
       const state = await this.state()
       const todo = state.addons.filter((a) => a.status !== 'up-to-date')
       for (const view of todo) {
-        const r = this.records.find((x) => x.repo === view.repo)
+        const r = this.records.find((x) => addonKey(x) === addonKey(view))
         if (r) await this.install(r).catch(() => {})
       }
       return this.changed()
@@ -282,7 +299,7 @@ export class Manager extends EventEmitter {
             r.error = null
           } catch (e) {
             r.error = (e as Error).message
-            this.log('error', `${r.repo}: ${r.error}`)
+            this.log('error', `${addonKey(r)}: ${r.error}`)
           }
         }
         await this.persist()

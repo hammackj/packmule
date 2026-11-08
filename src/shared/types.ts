@@ -34,6 +34,12 @@ export interface AddonRecord {
   repo: string
   /** Where the addon comes from; records saved before this field existed are GitHub */
   source?: AddonSource
+  /**
+   * GitHub only: follow releases whose tag has this prefix (e.g. "spoken/";
+   * "" = tags without one), for repos that publish several products. Unset
+   * means GitHub's /releases/latest.
+   */
+  tagPrefix?: string
   /** CurseForge project id */
   modId?: number
   /** Display name, when the source provides one */
@@ -51,6 +57,11 @@ export interface AddonRecord {
   /** Set when the latest release has no build listed for this client's interface */
   compatWarning: string | null
   error: string | null
+}
+
+/** Unique id of a managed addon within a client; also what the renderer sends back over IPC. */
+export function addonKey(r: Pick<AddonRecord, 'repo' | 'tagPrefix'>): string {
+  return r.tagPrefix ? `${r.repo}#${r.tagPrefix}` : r.repo
 }
 
 export type AddonStatus =
@@ -102,8 +113,8 @@ export interface Api {
   updateSettings(update: SettingsUpdate): Promise<AppState>
   pickFolder(): Promise<string | null>
   addAddon(url: string): Promise<AppState>
-  removeAddon(repo: string): Promise<AppState>
-  installAddon(repo: string): Promise<AppState>
+  removeAddon(key: string): Promise<AppState>
+  installAddon(key: string): Promise<AppState>
   updateAll(): Promise<AppState>
   checkUpdates(): Promise<AppState>
   openExternal(url: string): Promise<void>

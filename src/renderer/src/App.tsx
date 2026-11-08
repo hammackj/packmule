@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { AddonStatus, AddonView, AppState, LogEntry, ManualAddon } from '../../shared/types'
+import { addonKey, type AddonStatus, type AddonView, type AppState, type LogEntry, type ManualAddon } from '../../shared/types'
 import Settings from './Settings'
 
 const api = window.api
@@ -18,9 +18,13 @@ function errorText(e: unknown): string {
 }
 
 function addonPage(a: AddonView): string {
-  return a.source === 'curseforge'
-    ? `https://www.curseforge.com/wow/addons/${a.repo}`
-    : `https://github.com/${a.repo}`
+  if (a.source === 'curseforge') return `https://www.curseforge.com/wow/addons/${a.repo}`
+  return a.tagPrefix ? `https://github.com/${a.repo}/releases` : `https://github.com/${a.repo}`
+}
+
+function addonLabel(a: AddonView): string {
+  if (a.name) return a.name
+  return a.tagPrefix ? `${a.repo} · ${a.tagPrefix.replace(/\/$/, '')}` : a.repo
 }
 
 function timeAgo(iso: string | null): string {
@@ -148,7 +152,7 @@ export default function App(): React.JSX.Element {
             </thead>
             <tbody>
               {state.addons.map((a) => (
-                <AddonRow key={a.repo} addon={a} disabled={anyBusy} run={run} />
+                <AddonRow key={addonKey(a)} addon={a} disabled={anyBusy} run={run} />
               ))}
               {state.unmanaged.map((m) => (
                 <ManualRow key={m.folder} addon={m} />
@@ -244,7 +248,7 @@ function AddonRow(props: {
     <tr>
       <td>
         <button className="link repo" onClick={() => void window.api.openExternal(addonPage(a))}>
-          {a.name ?? a.repo}
+          {addonLabel(a)}
         </button>
         <span className={`source ${a.source ?? 'github'}`}>
           {a.source === 'curseforge' ? 'CurseForge' : 'GitHub'}
@@ -269,7 +273,7 @@ function AddonRow(props: {
         <button
           className={a.status === 'up-to-date' ? '' : 'primary'}
           disabled={disabled}
-          onClick={() => void run(() => window.api.installAddon(a.repo))}
+          onClick={() => void run(() => window.api.installAddon(addonKey(a)))}
         >
           {actionLabel}
         </button>
@@ -277,8 +281,8 @@ function AddonRow(props: {
           className="danger"
           disabled={disabled}
           onClick={() => {
-            if (confirm(`Remove ${a.repo} and delete its folders (${a.folders.join(', ') || 'none'})?`)) {
-              void run(() => window.api.removeAddon(a.repo))
+            if (confirm(`Remove ${addonLabel(a)} and delete its folders (${a.folders.join(', ') || 'none'})?`)) {
+              void run(() => window.api.removeAddon(addonKey(a)))
             }
           }}
         >
