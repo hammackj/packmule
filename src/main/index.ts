@@ -70,6 +70,16 @@ function registerIpc(): void {
   manager.on('log', (entry) => win?.webContents.send('log', entry))
 }
 
+// Two instances would each hold their own copy of state.json in memory and
+// overwrite each other's changes, so a second launch just focuses the first.
+// The lock is scoped to userData, which is pinned above.
+if (!app.requestSingleInstanceLock()) app.exit(0)
+app.on('second-instance', () => {
+  if (!win) return
+  if (win.isMinimized()) win.restore()
+  win.focus()
+})
+
 app.whenReady().then(async () => {
   registerIpc()
   await manager.init()
