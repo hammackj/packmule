@@ -141,17 +141,71 @@ pub struct AssetChoice {
     pub interface_match: Option<bool>,
 }
 
+/// GitHub's API allowance, from the rate-limit headers of the latest response.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RateLimit {
+    pub limit: u32,
+    pub remaining: u32,
+    /// When the allowance refills, as a Unix timestamp.
+    pub reset: i64,
+}
+
+impl RateLimit {
+    fn from_headers(res: &crate::http::Response) -> Option<Self> {
+        Some(Self {
+            limit: res.header("x-ratelimit-limit")?.parse().ok()?,
+            remaining: res.header("x-ratelimit-remaining")?.parse().ok()?,
+            reset: res.header("x-ratelimit-reset")?.parse().ok()?,
+        })
+    }
+}
+
 pub struct GitHubClient {
     http: Arc<dyn Http>,
     token: Box<dyn Fn() -> String + Send + Sync>,
     /// ETag cache so unchanged releases cost no rate limit (304s are free).
     etags: Mutex<HashMap<String, (String, Vec<u8>)>>,
+    rate_limit: Mutex<Option<RateLimit>>,
     manifests: Mutex<HashMap<String, PackagerManifest>>,
 }
 
 impl GitHubClient {
     pub fn new(http: Arc<dyn Http>, token: impl Fn() -> String + Send + Sync + 'static) -> Self {
-        Self { http, token: Box::new(token), etags: Mutex::default(), manifests: Mutex::default() }
+        Self {
+            http,
+            token: Box::new(token),
+            etags: Mutex::default(),
+            rate_limit: Mutex::default(),
+            manifests: Mutex::default(),
+        }
+    }
+
+    /// The allowance as of the last API response, if any was made.
+    pub fn rate_limit(&self) -> Option<RateLimit> {
+        self.rate_limit.lock().unwrap().clone()
+    }
+
+    /// Asks GitHub for the current allowance. /rate_limit itself is free.
+    pub fn fetch_rate_limit(&self) -> Result<RateLimit> {
+        #[derive(Deserialize)]
+        struct Resources {
+            resources: Core,
+        }
+        #[derive(Deserialize)]
+        struct Core {
+            core: Bucket,
+        }
+        #[derive(Deserialize)]
+        struct Bucket {
+            limit: u32,
+            remaining: u32,
+            reset: i64,
+        }
+        let r: Resources = self.api("/rate_limit")?;
+        let b = r.resources.core;
+        let limit = RateLimit { limit: b.limit, remaining: b.remaining, reset: b.reset };
+        *self.rate_limit.lock().unwrap() = Some(limit.clone());
+        Ok(limit)
     }
 
     fn api<T: DeserializeOwned>(&self, path: &str) -> Result<T> {
@@ -170,6 +224,9 @@ impl GitHubClient {
         }
 
         let res = self.http.get(&url, &headers)?;
+        if let Some(limit) = RateLimit::from_headers(&res) {
+            *self.rate_limit.lock().unwrap() = Some(limit);
+        }
         let body = match (res.status, cached) {
             (304, Some((_, body))) => body,
             (404, _) => bail!("Repository not found or has no releases"),
@@ -303,6 +360,27 @@ mod tests {
         assert_eq!(gh.latest_release("o/r", None).unwrap().tag_name, "v1");
         assert_eq!(gh.latest_release("o/r", None).unwrap().tag_name, "v1");
         assert_eq!(*http.not_modified.lock().unwrap(), 1);
+    }
+
+    #[test]
+    fn tracks_the_rate_limit() {
+        let http = Arc::new(FakeHttp::default());
+        http.serve_status(
+            "https://api.github.com/repos/o/limited/releases/latest",
+            403,
+            &[("X-RateLimit-Limit", "60"), ("X-RateLimit-Remaining", "0"), ("X-RateLimit-Reset", "1900000000")],
+        );
+        http.serve_json(
+            "https://api.github.com/rate_limit",
+            serde_json::json!({ "resources": { "core": { "limit": 5000, "remaining": 4990, "reset": 1900000123, "used": 10 } } }),
+        );
+        let gh = client(&http);
+        assert_eq!(gh.rate_limit(), None);
+        let _ = gh.latest_release("o/limited", None);
+        assert_eq!(gh.rate_limit(), Some(RateLimit { limit: 60, remaining: 0, reset: 1900000000 }));
+        let fetched = gh.fetch_rate_limit().unwrap();
+        assert_eq!(fetched, RateLimit { limit: 5000, remaining: 4990, reset: 1900000123 });
+        assert_eq!(gh.rate_limit(), Some(fetched));
     }
 
     #[test]

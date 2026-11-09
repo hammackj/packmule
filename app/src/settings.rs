@@ -53,6 +53,45 @@ impl SettingsForm {
     }
 }
 
+/// "GitHub API: 4,990 of 5,000 requests left · resets at 10:42 (in 38 min)".
+fn rate_limit_line(state: &AppState) -> Div {
+    let Some(r) = &state.rate_limit else { return muted("GitHub API allowance: checking…") };
+    let fmt = |n: u32| {
+        let s = n.to_string();
+        let mut out = String::new();
+        for (i, c) in s.chars().enumerate() {
+            if i > 0 && (s.len() - i) % 3 == 0 {
+                out.push(',');
+            }
+            out.push(c);
+        }
+        out
+    };
+    let now = chrono::Utc::now().timestamp();
+    let mins = ((r.reset - now).max(0) + 59) / 60;
+    let at = chrono::DateTime::from_timestamp(r.reset, 0)
+        .map(|t| t.with_timezone(&chrono::Local).format("%-I:%M %p").to_string())
+        .unwrap_or_default();
+    let who = if r.limit > 60 { "with your token" } else { "without a token" };
+    let color = if r.remaining == 0 {
+        ERR
+    } else if r.remaining * 10 < r.limit {
+        WARN
+    } else {
+        MUTED
+    };
+    let text = if r.remaining == r.limit {
+        format!("GitHub API: all {} requests an hour available ({who})", fmt(r.limit))
+    } else {
+        format!(
+            "GitHub API: {} of {} requests left this hour ({who}) · resets at {at} (in {mins} min)",
+            fmt(r.remaining),
+            fmt(r.limit)
+        )
+    };
+    small(text, color)
+}
+
 fn field(label: &str, input: impl IntoElement) -> Div {
     v_flex().gap_1().child(div().text_sm().child(label.to_string())).child(input)
 }
@@ -140,6 +179,7 @@ impl PackmuleView {
                     );
                 }
                 f.child(muted("Stored in the system keyring (KWallet / GNOME Keyring) when one is available."))
+                    .child(rate_limit_line(state))
             })
             .child(
                 h_flex()

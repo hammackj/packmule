@@ -18,6 +18,8 @@ pub enum Command {
     RemoveAddon(String),
     UpdateAll,
     CheckUpdates,
+    /// Re-read the GitHub API allowance (for Settings).
+    RefreshRateLimit,
     Shutdown,
     /// The automatic check timer fired (internal).
     #[doc(hidden)]
@@ -93,6 +95,7 @@ fn run(mut m: Manager, rx: Receiver<Command>, startup_checks: bool) {
         match cmd {
             Command::Shutdown => return,
             Command::Refresh => m.changed(),
+            Command::RefreshRateLimit => m.refresh_rate_limit(),
             Command::UpdateSettings(u) => report(&mut m, |m| m.update_settings(u)),
             Command::AddAddon(url) => report(&mut m, |m| m.add_addon(&url)),
             Command::InstallCatalog(id) => report(&mut m, |m| m.install_catalog(&id)),

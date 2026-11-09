@@ -10,7 +10,7 @@ use anyhow::{Context, Result, anyhow, bail};
 
 use crate::catalog::{Catalog, CatalogEntry, matches_entry, product_flavor};
 use crate::game::{GameInstall, addons_dir, detect_installs};
-use crate::github::{GitHubClient, ReleaseAsset, parse_repo, tag_stream};
+use crate::github::{GitHubClient, RateLimit, ReleaseAsset, parse_repo, tag_stream};
 use crate::http::Http;
 use crate::installer::{install_asset, list_addon_folders, remove_folders, verify_folders};
 use crate::store::{AddonRecord, Settings, Store, addon_key};
@@ -80,6 +80,8 @@ pub struct AppState {
     pub flavor: Option<String>,
     pub app_version: String,
     pub app_update: Option<AppUpdate>,
+    /// GitHub API allowance as of the last request (None until one is made).
+    pub rate_limit: Option<RateLimit>,
     pub checking: bool,
     pub last_check: Option<String>,
     pub path_error: Option<String>,
@@ -361,6 +363,7 @@ impl Manager {
             flavor: flavor.map(str::to_string),
             app_version: self.app_version.clone(),
             app_update: self.app_update.clone(),
+            rate_limit: self.github.rate_limit(),
             checking: self.checking,
             last_check: self.last_check.clone(),
             path_error: self.path_error.clone(),
@@ -373,6 +376,8 @@ impl Manager {
         if let Some(token) = &u.github_token {
             self.store.set_token(token)?;
             *self.token.lock().unwrap() = self.store.token();
+            // A new token is a different allowance.
+            let _ = self.github.fetch_rate_limit();
         }
         let reinstalls = u.wow_path.is_some() || u.active_install.is_some();
         self.store.set_settings(|s| {
@@ -399,6 +404,13 @@ impl Manager {
     /// Fetches the published catalog; keeps the bundled one when offline.
     pub fn refresh_catalog(&mut self) {
         if self.catalog.refresh(self.http.as_ref()) {
+            self.changed();
+        }
+    }
+
+    /// Refreshes the GitHub API allowance shown in Settings (free to ask).
+    pub fn refresh_rate_limit(&mut self) {
+        if self.github.fetch_rate_limit().is_ok() {
             self.changed();
         }
     }

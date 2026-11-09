@@ -155,7 +155,7 @@ impl PackmuleView {
     pub(crate) fn open_settings(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(state) = &self.state {
             self.settings = Some(SettingsForm::new(state, window, cx));
-            cx.notify();
+            self.send(Command::RefreshRateLimit, cx);
         }
     }
 
