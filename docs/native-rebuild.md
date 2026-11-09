@@ -1,9 +1,9 @@
 # Plan: native Packmule on GPUI (no Electron)
 
-Status (2026-11-09, branch `native`): **phase 1 done** (the core library in
-`native/`, 37 tests); **phase 2 in progress**: the GPUI interface in
-`native/app` renders every screen on real data and needs click-testing. The
-Electron app was released as v0.1.0 first.
+Status (2026-11-09, branch `native`): **phases 1–3 done**: the core library
+in `native/` (37 tests), the GPUI interface in `native/app` (click-tested:
+add, remove, reinstall), and Linux packages built by CI. **Phase 4, the
+switch-over, is next.** The Electron app was released as v0.1.0 first.
 
 ## Why
 
@@ -165,6 +165,21 @@ ui (GPUI)  --Command-->  worker thread  --Event-->  ui
   for screenshots (there is no input automation on KDE Wayland here).
 - Test against a copy of the config: `XDG_CONFIG_HOME=<dir>` with
   `<dir>/packmule/state.json`.
+
+### Phase 3 notes
+
+- `native/packaging/build-packages.sh <binary> <out>` builds
+  `packmule-<v>-x86_64-linux.tar.gz` (with `install.sh` for `~/.local`),
+  `packmule_<v>_amd64.deb` (needs `dpkg-deb`) and
+  `packmule-<v>-1-x86_64.pkg.tar.zst` (`.PKGINFO` + `.MTREE` like makepkg;
+  needs `bsdtar` and `zstd`).
+- CI (`native.yml`, job `package`) builds on Ubuntu 22.04, so the binary
+  needs glibc 2.35+, and uploads the packages as artifacts. The CI binary was
+  run on CachyOS and works.
+- Runtime dependencies: libxcb, libxkbcommon(-x11) linked; Wayland, the
+  Vulkan loader and EGL loaded on demand. Fonts are parsed in Rust (no
+  fontconfig/freetype libraries).
+- Sizes: pacman 13 MB, deb 12 MB, tar.gz 18 MB (Electron: 91–125 MB).
 
 ## Repository layout during the rebuild
 
