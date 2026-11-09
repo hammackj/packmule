@@ -23,7 +23,7 @@ mod testutil;
 
 use std::path::PathBuf;
 
-/// `~/.config/packmule`, shared with the Electron app.
+/// `~/.config/packmule` (the same place Packmule 0.1 used).
 pub fn config_dir() -> PathBuf {
     directories::BaseDirs::new().map(|d| d.config_dir().join("packmule")).unwrap_or_else(|| PathBuf::from(".packmule"))
 }

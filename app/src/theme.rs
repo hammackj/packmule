@@ -1,4 +1,4 @@
-//! Packmule's dark palette with gold accents, matching the Electron app.
+//! Packmule's dark palette with gold accents.
 
 use gpui::{App, Hsla, rgb};
 use gpui_component::{Theme, ThemeMode};

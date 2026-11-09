@@ -1,5 +1,5 @@
-//! Developer tool: runs the core against a state.json, for comparing with the
-//! Electron app until the GPUI interface exists.
+//! Developer tool: runs the core against a state.json from a terminal, without
+//! the interface.
 //!
 //!   cargo run --example cli -- [--config DIR] status
 //!   cargo run --example cli -- [--config DIR] check     # network; adopts + checks, never installs

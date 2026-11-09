@@ -1,6 +1,3 @@
 target/
 dist/
 *.log
-# Left over from the Electron app
-node_modules/
-out/
