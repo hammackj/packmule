@@ -71,12 +71,25 @@ pub struct Review {
     pub codex: String,
     /// The report, relative to the repository root.
     pub report: String,
+    /// A maintainer read the report and passed the build although a reviewer
+    /// didn't (an honest bug, or a review that ran out of time).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub signoff: Option<Signoff>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Signoff {
+    pub by: String,
+    /// YYYY-MM-DD.
+    pub date: String,
+    /// Why it passes.
+    pub note: String,
 }
 
 impl Review {
-    /// Both reviewers passed it.
+    /// Both reviewers passed it, or a maintainer signed it off.
     pub fn passed(&self) -> bool {
-        self.claude == "pass" && self.codex == "pass"
+        (self.claude == "pass" && self.codex == "pass") || self.signoff.is_some()
     }
 
     pub fn covers(&self, sha256: &str) -> bool {
@@ -226,6 +239,7 @@ mod tests {
             claude: claude.into(),
             codex: codex.into(),
             report: String::new(),
+            signoff: None,
         };
         let (v3, v2) = (review("v3", "cc", "fail", "pass"), review("v2", "bb", "pass", "pass"));
         e.reviews = vec![v3.clone(), v2.clone()];
@@ -233,6 +247,10 @@ mod tests {
         assert_eq!(e.review_status(Some("cc")), ReviewStatus::Flagged(v3));
         assert_eq!(e.review_status(Some("dd")), ReviewStatus::NotReviewed(Some(v2.clone())));
         assert_eq!(e.review_status(None), ReviewStatus::NotReviewed(Some(v2)));
+        let mut signed = review("v4", "ee", "pass", "unsure");
+        assert!(!signed.passed());
+        signed.signoff = Some(Signoff { by: "me".into(), date: "2026-11-09".into(), note: "honest bug".into() });
+        assert!(signed.passed());
         e.reviews.clear();
         assert_eq!(e.review_status(Some("bb")), ReviewStatus::NotReviewed(None));
     }

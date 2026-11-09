@@ -21,7 +21,7 @@ use std::process::{Command, Stdio};
 use std::sync::Arc;
 
 use anyhow::{Context, Result, bail};
-use packmule::catalog::{CatalogEntry, Review, parse};
+use packmule::catalog::{CatalogEntry, Review, Signoff, parse};
 use packmule::github::{GitHubClient, Release};
 use packmule::http::{Http, UreqHttp};
 use packmule::installer::{extract_zip, sha256_file};
@@ -133,10 +133,16 @@ fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let keep = args.iter().any(|a| a == "--keep");
     let dry_run = args.iter().any(|a| a == "--dry-run");
-    let Some(id) = args.iter().find(|a| !a.starts_with("--")).cloned() else {
-        bail!("usage: cargo run --example review -- <catalog id> [--keep] [--dry-run]");
+    let note = args.iter().position(|a| a == "--note").and_then(|i| args.get(i + 1)).cloned();
+    let Some(id) = args.iter().find(|a| !a.starts_with("--") && Some(*a) != note.as_ref()).cloned() else {
+        bail!(
+            "usage: cargo run --example review -- <catalog id> [--keep] [--dry-run] | --pass <catalog id> --note <why>"
+        );
     };
     let catalog_file = Path::new(ROOT).join("catalog.json");
+    if args.iter().any(|a| a == "--pass") {
+        return sign_off(&catalog_file, &id, &note.context("--pass needs --note \"why it passes\"")?);
+    }
     let catalog: Value = serde_json::from_str(&fs::read_to_string(&catalog_file)?)?;
     let entry =
         parse(&catalog).into_iter().find(|e| e.id == id).with_context(|| format!("{id} is not in catalog.json"))?;
@@ -227,6 +233,7 @@ fn main() -> Result<()> {
         claude: verdict(&claude_report),
         codex: verdict(&codex_report),
         report: format!("reviews/{id}/{}.md", release.tag_name.replace('/', "-")),
+        signoff: None,
     };
 
     let mut md = format!("# {} {}\n\n", entry.name, release.tag_name);
@@ -275,6 +282,37 @@ fn main() -> Result<()> {
     if !review.passed() {
         std::process::exit(1);
     }
+    Ok(())
+}
+
+/// Records that a maintainer read the latest review's report and passes the
+/// build, and appends that to the report.
+fn sign_off(catalog_file: &Path, id: &str, note: &str) -> Result<()> {
+    let mut catalog: Value = serde_json::from_str(&fs::read_to_string(catalog_file)?)?;
+    let addons = catalog["addons"].as_array_mut().context("no addons list")?;
+    let e = addons.iter_mut().find(|e| e["id"] == id).with_context(|| format!("{id} is not in catalog.json"))?;
+    let mut reviews: Vec<Review> = serde_json::from_value(e["reviews"].clone()).unwrap_or_default();
+    let review = reviews.first_mut().with_context(|| format!("{id} has no review to sign off"))?;
+    let by = Command::new("git")
+        .args(["config", "user.name"])
+        .output()
+        .ok()
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| "maintainer".into());
+    let date = chrono::Local::now().format("%Y-%m-%d").to_string();
+    review.signoff = Some(Signoff { by: by.clone(), date: date.clone(), note: note.to_string() });
+    let report = Path::new(ROOT).join(&review.report);
+    let mut md = fs::read_to_string(&report).unwrap_or_default();
+    let _ = write!(
+        md,
+        "\n## Maintainer sign-off\n\nPassed by {by} on {date} (Claude: {}, Codex: {}): {note}\n",
+        review.claude, review.codex
+    );
+    fs::write(&report, md)?;
+    println!("{id} {}: signed off by {by}", review.tag);
+    e["reviews"] = serde_json::to_value(&reviews)?;
+    fs::write(catalog_file, serde_json::to_string_pretty(&catalog)? + "\n")?;
     Ok(())
 }
 

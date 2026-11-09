@@ -43,10 +43,16 @@ pub fn review_badge(id: impl Into<SharedString>, status: &ReviewStatus) -> AnyEl
     let (b, tip, report) = match status {
         ReviewStatus::Reviewed(r) => (
             badge("Reviewed", OK),
-            format!(
-                "Claude and Codex reviewed this exact build ({}) on {} for malicious code, and both passed it. Click for the report.",
-                r.tag, r.date
-            ),
+            match &r.signoff {
+                None => format!(
+                    "Claude and Codex reviewed this exact build ({}) on {} for malicious code, and both passed it. Click for the report.",
+                    r.tag, r.date
+                ),
+                Some(s) => format!(
+                    "Claude and Codex reviewed this exact build ({}) for malicious code (Claude: {}, Codex: {}). {} read the report and passed it on {}: {} Click for the report.",
+                    r.tag, r.claude, r.codex, s.by, s.date, s.note
+                ),
+            },
             Some(&r.report),
         ),
         ReviewStatus::Flagged(r) => (

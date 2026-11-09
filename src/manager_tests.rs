@@ -346,6 +346,7 @@ fn review_badges_follow_the_exact_build() {
         claude: "pass".into(),
         codex: "pass".into(),
         report: "reviews/foo/v1.md".into(),
+        signoff: None,
     };
     foo.reviews = vec![review.clone()];
     let mut m = e.manager(vec![foo.clone()]);

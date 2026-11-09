@@ -67,6 +67,20 @@ report before committing either way. `--dry-run` prepares everything and
 prints the prompt without running a reviewer; `--keep` leaves the unpacked
 code in place to look at.
 
+## Signing off
+
+When a reviewer is unsure or fails a build for something that isn't
+malicious (an honest bug, or a review that didn't finish), a maintainer can
+read the report and pass it:
+
+```sh
+cargo run --example review -- --pass <catalog id> --note "why it passes"
+```
+
+That records who passed it, when and why next to the reviewers' verdicts in
+`catalog.json`, and appends it to the report. The app then shows the build as
+Reviewed, and its tooltip names the sign-off.
+
 ## Verified source
 
 `verified` on a catalog entry records that someone checked the repository is
