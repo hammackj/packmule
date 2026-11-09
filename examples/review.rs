@@ -49,6 +49,10 @@ const RISKY: &[(&str, &str)] = &[
         "Auction house",
         r"\b(PlaceAuctionBid|PostAuction|StartAuction|C_AuctionHouse\.(PlaceBid|PostItem|PostCommodity|ConfirmCommoditiesPurchase))\b",
     ),
+    (
+        "Uses or moves bag items",
+        r"\b(UseContainerItem|PickupContainerItem|SplitContainerItem|PickupMerchantItem|SellAllJunkItems)\b",
+    ),
     ("Destroys items", r"\b(DeleteCursorItem|DeleteInboxItem|ReturnInboxItem)\b"),
     ("Chat / whispers", r"\b(SendChatMessage|BNSendWhisper|BNSendGameData|C_BattleNet\.SendWhisper)\b"),
     ("Addon messages", r"\b(SendAddonMessage(Logged)?)\b"),
