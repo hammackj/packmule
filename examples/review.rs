@@ -1,8 +1,11 @@
 //! Reviews a catalog addon's latest release for malicious code with Claude and
 //! Codex, writes the report to reviews/<id>/<tag>.md and records the verdicts
-//! in catalog.json. A release counts as reviewed only when both pass.
+//! in the catalog. A release counts as reviewed only when both pass.
 //!
 //!   GITHUB_TOKEN=$(gh auth token) cargo run --example review -- <id> [--keep] [--dry-run]
+//!
+//! The catalog lives in its own repository, hammackj/packmule-catalog, cloned
+//! next to this one (or set PACKMULE_CATALOG to its path).
 //!
 //! It downloads every zip of the release (checking each against the SHA-256
 //! GitHub publishes), unpacks them, and when an earlier build of the addon
@@ -28,7 +31,12 @@ use packmule::installer::{extract_zip, sha256_file};
 use regex::Regex;
 use serde_json::Value;
 
-const ROOT: &str = env!("CARGO_MANIFEST_DIR");
+/// The packmule-catalog checkout: $PACKMULE_CATALOG, else next to this repo.
+fn catalog_dir() -> PathBuf {
+    std::env::var_os("PACKMULE_CATALOG")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| Path::new(env!("CARGO_MANIFEST_DIR")).join("../packmule-catalog"))
+}
 /// Beyond this a diff is not much easier to review than the code itself.
 const MAX_DIFF_BYTES: u64 = 3 << 20;
 
@@ -117,6 +125,7 @@ How to work:
 {scope}
 - REVIEW_PRESCAN.txt lists every line matching a risky API, and files that aren't normal addon files. Check every hit there and explain any that move gold or items, talk to players, or run code from strings.
 - Large data files (item, quest or NPC tables) only need skimming for embedded code.
+- In a large addon you may not be able to read every line. Read the code behind every pre-scan hit, the addon's own message handlers and slash commands, and anything that looks out of place, and say what you covered. Not having read every file is not by itself a reason for UNSURE: use UNSURE for a specific concern a human should check.
 - Read code to confirm a finding; quote the file and line. Don't report anything you haven't seen.
 
 Write a short report in Markdown: what the addon does, each risky behaviour you checked and why it is or isn't a problem, and any concern. Then finish with exactly one line on its own:
@@ -139,7 +148,13 @@ fn main() -> Result<()> {
             "usage: cargo run --example review -- <catalog id> [--keep] [--dry-run] | --pass <catalog id> --note <why>"
         );
     };
-    let catalog_file = Path::new(ROOT).join("catalog.json");
+    let catalog_file = catalog_dir().join("catalog.json");
+    if !catalog_file.exists() {
+        bail!(
+            "{} not found: clone https://github.com/hammackj/packmule-catalog next to this repo or set PACKMULE_CATALOG",
+            catalog_file.display()
+        );
+    }
     if args.iter().any(|a| a == "--pass") {
         return sign_off(&catalog_file, &id, &note.context("--pass needs --note \"why it passes\"")?);
     }
@@ -257,7 +272,7 @@ fn main() -> Result<()> {
         claude_report.trim(),
         codex_report.trim()
     );
-    let report = Path::new(ROOT).join(&review.report);
+    let report = catalog_dir().join(&review.report);
     fs::create_dir_all(report.parent().unwrap())?;
     fs::write(&report, md)?;
 
@@ -273,6 +288,8 @@ fn main() -> Result<()> {
 
     if keep {
         println!("work directory: {}", work.keep().display());
+    } else {
+        drop(work); // exit() below skips destructors
     }
     println!("\nClaude: {}   Codex: {}", review.claude, review.codex);
     println!("report: {}", review.report);
@@ -302,7 +319,7 @@ fn sign_off(catalog_file: &Path, id: &str, note: &str) -> Result<()> {
         .unwrap_or_else(|| "maintainer".into());
     let date = chrono::Local::now().format("%Y-%m-%d").to_string();
     review.signoff = Some(Signoff { by: by.clone(), date: date.clone(), note: note.to_string() });
-    let report = Path::new(ROOT).join(&review.report);
+    let report = catalog_dir().join(&review.report);
     let mut md = fs::read_to_string(&report).unwrap_or_default();
     let _ = write!(
         md,

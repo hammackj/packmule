@@ -35,7 +35,7 @@ fn explained(id: SharedString, b: Div, tip: String, url: Option<String>) -> AnyE
 }
 
 fn report_url(report: &str) -> String {
-    format!("https://github.com/hammackj/packmule/blob/master/{report}")
+    format!("https://github.com/hammackj/packmule-catalog/blob/main/{report}")
 }
 
 /// "Reviewed" / "Flagged" / "Not reviewed" for a build.

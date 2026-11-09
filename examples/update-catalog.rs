@@ -18,7 +18,13 @@ use packmule::http::{Http, UreqHttp};
 use packmule::zipindex::{addon_folders_in, remote_zip_entries};
 use serde_json::{Value, json};
 
-const FILE: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/catalog.json");
+/// catalog.json in the packmule-catalog checkout: $PACKMULE_CATALOG, else next to this repo.
+fn catalog_file() -> std::path::PathBuf {
+    std::env::var_os("PACKMULE_CATALOG")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../packmule-catalog"))
+        .join("catalog.json")
+}
 
 /// Primary folder first: the one most others are named after (BigWigs for
 /// BigWigs_Core), else the shortest.
@@ -66,7 +72,10 @@ fn main() -> Result<()> {
     let http = Arc::new(UreqHttp::new());
     let token = std::env::var("GITHUB_TOKEN").unwrap_or_default();
     let gh = GitHubClient::new(http.clone(), move || token.clone());
-    let mut catalog: Value = serde_json::from_str(&std::fs::read_to_string(FILE)?)?;
+    let mut catalog: Value = serde_json::from_str(
+        &std::fs::read_to_string(catalog_file())
+            .context("clone hammackj/packmule-catalog next to this repo or set PACKMULE_CATALOG")?,
+    )?;
     let mut failed = false;
     for entry in catalog["addons"].as_array_mut().context("no addons list")? {
         let id = entry["id"].as_str().unwrap_or("?").to_string();
@@ -78,7 +87,7 @@ fn main() -> Result<()> {
             }
         }
     }
-    std::fs::write(FILE, serde_json::to_string_pretty(&catalog)? + "\n")?;
+    std::fs::write(catalog_file(), serde_json::to_string_pretty(&catalog)? + "\n")?;
     if failed {
         std::process::exit(1);
     }

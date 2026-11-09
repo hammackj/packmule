@@ -63,34 +63,30 @@ carry over; only a saved GitHub token needs entering again.
 
 ## The catalog
 
-`catalog.json` lists the Browse tab's addons. Packmule fetches the copy in this
-repository at startup, so additions reach everyone without an app release.
-
-To add an addon, add an entry and refresh the game versions it supports:
-
-```sh
-GITHUB_TOKEN=$(gh auth token) cargo run --example update-catalog
-```
-
-That reads each addon's latest release and fills in `flavors` (from its
-`release.json`) and `folders` (from the zip's file index). Addons
-whose releases have no `release.json` keep the flavors written by hand, so only
-list versions you've checked.
-
-### Verified and reviewed
+The Browse tab's addons, and their reviews, live in their own repository:
+[hammackj/packmule-catalog](https://github.com/hammackj/packmule-catalog).
+Packmule fetches its `catalog.json` at startup, so additions reach everyone
+without an app release. `catalog.json` here is a snapshot built into the app
+as the offline fallback; `packaging/sync-catalog.sh` refreshes it, and
+releases download the latest one when they build.
 
 Browse and Installed show two kinds of badge:
 
-- **Verified source:** the entry's repository was checked to be the author's
-  official one (not a fork or lookalike), noting whether its zips are built by
-  CI or uploaded by hand.
+- **Verified source:** the repository was checked to be the author's official
+  one, noting whether its zips are built by CI or uploaded by hand.
 - **Reviewed:** Claude and Codex both read the code of that exact release zip
-  (matched by SHA-256) looking for malicious behaviour, and both passed it.
-  Other builds show **Not reviewed**, and a build whose review didn't pass
-  shows **Flagged**. Badges are information only; nothing blocks an install.
+  (matched by SHA-256) looking for malicious behaviour and passed it, or a
+  maintainer signed off a reviewer's doubt after reading the report. Other
+  builds show **Not reviewed**, and a build whose review didn't pass shows
+  **Flagged**. Badges are information only; nothing blocks an install.
 
-How reviews work, what they look for and how to run one is in
-[REVIEWS.md](REVIEWS.md); reports live in `reviews/`.
+The tools that maintain the catalog are here, and work on a
+`packmule-catalog` checkout next to this repository (or `$PACKMULE_CATALOG`):
+
+```sh
+GITHUB_TOKEN=$(gh auth token) cargo run --example update-catalog   # flavors and folders
+GITHUB_TOKEN=$(gh auth token) cargo run --example review -- <id>   # Claude + Codex review
+```
 
 ## Development
 

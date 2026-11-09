@@ -62,7 +62,19 @@
       "verified": {
         "date": "2026-11-09",
         "ciBuilds": true
-      }
+      },
+      "reviews": [
+        {
+          "tag": "5.4.8",
+          "sha256": [
+            "016717c18a5d44e918853cef8bb43e62bbecce5a0515638e19c8e713ca7bc81f"
+          ],
+          "date": "2026-11-09",
+          "claude": "pass",
+          "codex": "pass",
+          "report": "reviews/allthethings/5.4.8.md"
+        }
+      ]
     },
     {
       "id": "questie",
@@ -85,7 +97,24 @@
       "verified": {
         "date": "2026-11-09",
         "ciBuilds": true
-      }
+      },
+      "reviews": [
+        {
+          "tag": "bundle/v12.6.4+v1.0.12",
+          "sha256": [
+            "47c990587950c9977af2ec1a4f1c9cf0414bbe400eabcedb8a4509226cb1bc76"
+          ],
+          "date": "2026-11-09",
+          "claude": "pass",
+          "codex": "unsure",
+          "report": "reviews/questie/bundle-v12.6.4+v1.0.12.md",
+          "signoff": {
+            "by": "hammackj",
+            "date": "2026-11-09",
+            "note": "Codex's concern is a privacy bug in party quest sharing (an outsider can request quest progress), not malicious code. Claude passed it."
+          }
+        }
+      ]
     },
     {
       "id": "questie-classic",
@@ -106,7 +135,24 @@
       "verified": {
         "date": "2026-11-09",
         "ciBuilds": true
-      }
+      },
+      "reviews": [
+        {
+          "tag": "v11.38.0",
+          "sha256": [
+            "f275e1b305ab2e48442c277966d7e12b9bb8f68b99dfacd6be9dca649a70c1fc"
+          ],
+          "date": "2026-11-09",
+          "claude": "pass",
+          "codex": "unsure",
+          "report": "reviews/questie-classic/v11.38.0.md",
+          "signoff": {
+            "by": "hammackj",
+            "date": "2026-11-09",
+            "note": "Same party quest-sharing privacy bug as Questie, not malicious code. Claude passed it."
+          }
+        }
+      ]
     },
     {
       "id": "dialogueui",
@@ -123,7 +169,24 @@
       "verified": {
         "date": "2026-11-09",
         "ciBuilds": false
-      }
+      },
+      "reviews": [
+        {
+          "tag": "v1.0.7-b",
+          "sha256": [
+            "3996b8a9792e030a9596d9905aa0f0c8bf7afdd740b331f5efadac75bcd1e0a4"
+          ],
+          "date": "2026-11-09",
+          "claude": "pass",
+          "codex": "unsure",
+          "report": "reviews/dialogueui/v1.0.7-b.md",
+          "signoff": {
+            "by": "hammackj",
+            "date": "2026-11-09",
+            "note": "Codex found nothing malicious but didn't finish reading every file; Claude read it and passed it."
+          }
+        }
+      ]
     },
     {
       "id": "spoken",
@@ -146,7 +209,19 @@
       "verified": {
         "date": "2026-11-09",
         "ciBuilds": true
-      }
+      },
+      "reviews": [
+        {
+          "tag": "spoken/v3.8.4",
+          "sha256": [
+            "746192ebe1a9de2ad34d19c85884f9161532bf3b6bd400bb78cdadb478ff3c8d"
+          ],
+          "date": "2026-11-09",
+          "claude": "pass",
+          "codex": "pass",
+          "report": "reviews/spoken/spoken-v3.8.4.md"
+        }
+      ]
     },
     {
       "id": "spoken-quests",
@@ -170,7 +245,19 @@
       "verified": {
         "date": "2026-11-09",
         "ciBuilds": false
-      }
+      },
+      "reviews": [
+        {
+          "tag": "quests-audio/v2.5.0",
+          "sha256": [
+            "bbe702b71f00f8c3586b6fd1c7d74ba67581449513b558627dfdc9787b0eb790"
+          ],
+          "date": "2026-11-09",
+          "claude": "pass",
+          "codex": "pass",
+          "report": "reviews/spoken-quests/quests-audio-v2.5.0.md"
+        }
+      ]
     },
     {
       "id": "spoken-places",
@@ -191,7 +278,19 @@
       "verified": {
         "date": "2026-11-09",
         "ciBuilds": false
-      }
+      },
+      "reviews": [
+        {
+          "tag": "places-audio/v2.1.0",
+          "sha256": [
+            "dc61d74619f40d7f91fa2ab8e547046a43dadac82d6095e07dd82ea335196e4b"
+          ],
+          "date": "2026-11-09",
+          "claude": "pass",
+          "codex": "pass",
+          "report": "reviews/spoken-places/places-audio-v2.1.0.md"
+        }
+      ]
     },
     {
       "id": "spoken-readables",
@@ -212,7 +311,19 @@
       "verified": {
         "date": "2026-11-09",
         "ciBuilds": false
-      }
+      },
+      "reviews": [
+        {
+          "tag": "readables-audio/v2.3.0",
+          "sha256": [
+            "7ef8d681a54b8b36c3096763795d45ec85f086df1135a70668f9fe7695bebbfa"
+          ],
+          "date": "2026-11-09",
+          "claude": "pass",
+          "codex": "pass",
+          "report": "reviews/spoken-readables/readables-audio-v2.3.0.md"
+        }
+      ]
     },
     {
       "id": "spoken-bosses",
@@ -233,7 +344,19 @@
       "verified": {
         "date": "2026-11-09",
         "ciBuilds": false
-      }
+      },
+      "reviews": [
+        {
+          "tag": "bosses-audio/v1.0.0",
+          "sha256": [
+            "9d023d923bbf7894d0f92fec025ff99bbfb64cba42b86d1659874f422e1e71d6"
+          ],
+          "date": "2026-11-09",
+          "claude": "pass",
+          "codex": "pass",
+          "report": "reviews/spoken-bosses/bosses-audio-v1.0.0.md"
+        }
+      ]
     },
     {
       "id": "bigwigs",
@@ -268,7 +391,19 @@
       "verified": {
         "date": "2026-11-09",
         "ciBuilds": true
-      }
+      },
+      "reviews": [
+        {
+          "tag": "v427.9",
+          "sha256": [
+            "89f2ba623bb6d69194843ea26ab7eaffac368dc51f85ddf614c881c2b608f1b1"
+          ],
+          "date": "2026-11-09",
+          "claude": "pass",
+          "codex": "unsure",
+          "report": "reviews/bigwigs/v427.9.md"
+        }
+      ]
     },
     {
       "id": "littlewigs",
@@ -307,7 +442,19 @@
       "verified": {
         "date": "2026-11-09",
         "ciBuilds": true
-      }
+      },
+      "reviews": [
+        {
+          "tag": "v12.1.23",
+          "sha256": [
+            "eae460023a8f0f6e1144e2edd87179c9335cadb70b727f595b70308f420e0bde"
+          ],
+          "date": "2026-11-09",
+          "claude": "pass",
+          "codex": "pass",
+          "report": "reviews/littlewigs/v12.1.23.md"
+        }
+      ]
     },
     {
       "id": "dbm",
@@ -338,7 +485,19 @@
       "verified": {
         "date": "2026-11-09",
         "ciBuilds": true
-      }
+      },
+      "reviews": [
+        {
+          "tag": "12.1.20",
+          "sha256": [
+            "777814eeb61d41ff0c010ec18194003dedaf69570984a87e7efbb1ead165c36b"
+          ],
+          "date": "2026-11-09",
+          "claude": "pass",
+          "codex": "unsure",
+          "report": "reviews/dbm/12.1.20.md"
+        }
+      ]
     },
     {
       "id": "plater",
@@ -360,7 +519,19 @@
       "verified": {
         "date": "2026-11-09",
         "ciBuilds": true
-      }
+      },
+      "reviews": [
+        {
+          "tag": "Plater-v663",
+          "sha256": [
+            "fb7125dea1d09f3896dc8154b40745efeb4d696f44357bd89f50ed9ef48d2136"
+          ],
+          "date": "2026-11-09",
+          "claude": "pass",
+          "codex": "unsure",
+          "report": "reviews/plater/Plater-v663.md"
+        }
+      ]
     },
     {
       "id": "kuinameplates",
@@ -383,7 +554,21 @@
         "date": "2026-11-09",
         "ciBuilds": true,
         "note": "No new release since July 2025."
-      }
+      },
+      "reviews": [
+        {
+          "tag": "2.29.20",
+          "sha256": [
+            "60e83ef8e53581f01dc1e17777666fd260a2e329fa25a0fbaff00a32fbfb220a",
+            "b033499e33a801a54514cdc0dff60f9c928340766cc34245a3e4ff45330b3c1c",
+            "cd29ee74549bdfce43b03529a433473cc2fa79c6e77c8df8157ae71ba8dbde29"
+          ],
+          "date": "2026-11-09",
+          "claude": "pass",
+          "codex": "pass",
+          "report": "reviews/kuinameplates/2.29.20.md"
+        }
+      ]
     },
     {
       "id": "bartender4",
@@ -404,7 +589,19 @@
       "verified": {
         "date": "2026-11-09",
         "ciBuilds": true
-      }
+      },
+      "reviews": [
+        {
+          "tag": "4.18.4",
+          "sha256": [
+            "70f11ceb20ce14b45f536cf52b2db5404b07ba7ee899070683ac0d5b543c3be6"
+          ],
+          "date": "2026-11-09",
+          "claude": "pass",
+          "codex": "pass",
+          "report": "reviews/bartender4/4.18.4.md"
+        }
+      ]
     },
     {
       "id": "dominos",
@@ -431,7 +628,19 @@
       "verified": {
         "date": "2026-11-09",
         "ciBuilds": true
-      }
+      },
+      "reviews": [
+        {
+          "tag": "11.5.3",
+          "sha256": [
+            "5231bd893966c84bf06f65077bb684b255dba8568faf74dde8b0d0a773bef806"
+          ],
+          "date": "2026-11-09",
+          "claude": "pass",
+          "codex": "pass",
+          "report": "reviews/dominos/11.5.3.md"
+        }
+      ]
     },
     {
       "id": "omnicc",
@@ -454,7 +663,19 @@
         "date": "2026-11-09",
         "ciBuilds": true,
         "note": "No new release since December 2025."
-      }
+      },
+      "reviews": [
+        {
+          "tag": "11.2.8",
+          "sha256": [
+            "1ced275d86be0072bd4888c79a42663ec0c18332a9e22fb3a7ee2ccbe4cc65e0"
+          ],
+          "date": "2026-11-09",
+          "claude": "pass",
+          "codex": "pass",
+          "report": "reviews/omnicc/11.2.8.md"
+        }
+      ]
     },
     {
       "id": "weakauras",
@@ -479,7 +700,19 @@
       "verified": {
         "date": "2026-11-09",
         "ciBuilds": true
-      }
+      },
+      "reviews": [
+        {
+          "tag": "5.22.1",
+          "sha256": [
+            "d0d4406b62e84d5e023f2af95e93d229907a41074d2749dd46643c8843536c33"
+          ],
+          "date": "2026-11-09",
+          "claude": "pass",
+          "codex": "unsure",
+          "report": "reviews/weakauras/5.22.1.md"
+        }
+      ]
     },
     {
       "id": "mapster",
@@ -497,7 +730,19 @@
       "verified": {
         "date": "2026-11-09",
         "ciBuilds": true
-      }
+      },
+      "reviews": [
+        {
+          "tag": "1.14.0",
+          "sha256": [
+            "16a05b5b5b628eb513470792d7a9633443a8fcfc594a0f920f681cdce1cdb532"
+          ],
+          "date": "2026-11-09",
+          "claude": "pass",
+          "codex": "pass",
+          "report": "reviews/mapster/1.14.0.md"
+        }
+      ]
     },
     {
       "id": "advancedinterfaceoptions",
@@ -520,7 +765,21 @@
       "verified": {
         "date": "2026-11-09",
         "ciBuilds": true
-      }
+      },
+      "reviews": [
+        {
+          "tag": "2.1.14",
+          "sha256": [
+            "189fcbd1e5033f311d5359dfc86ddda5fdf1230b0b4849f29a0a179fd1567f28",
+            "69650e6b97ed6872a1b88124d607c493cee5d6d1ff44ee1f7cfc3b9ca9a42131",
+            "d50b010bb85d0ccef215af66101f741697a792ef77dad313039b4ff65c23eac8"
+          ],
+          "date": "2026-11-09",
+          "claude": "pass",
+          "codex": "pass",
+          "report": "reviews/advancedinterfaceoptions/2.1.14.md"
+        }
+      ]
     }
   ]
 }

@@ -28,7 +28,7 @@ notify() {
 }
 
 stale() {
-    [ -n "$(find src app/src Cargo.toml Cargo.lock catalog.json -newer "$BIN" -print -quit)" ]
+    [ -n "$(find src app/src Cargo.toml Cargo.lock -newer "$BIN" -print -quit)" ]
 }
 
 if [ ! -x "$BIN" ]; then
