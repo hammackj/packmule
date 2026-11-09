@@ -1,4 +1,4 @@
-# Plan: native Packmule (no Electron)
+# Plan: native Packmule on GPUI (no Electron)
 
 Status: proposal, not started. Written 2026-11-09 against the Electron app on
 branch `packmule` (74e8bc4).
@@ -9,31 +9,46 @@ The Electron build is a 125 MB package that ships a whole Chromium, idles at
 roughly 200–300 MB of RAM, and needs Node to build. Packmule is a small
 utility that is idle most of the time, so that is all overhead.
 
-A native app with a GPU-drawn immediate-mode interface (the Dear ImGui style)
-would be:
+A native app drawn on the GPU would be:
 
-- **One file:** a single 8–12 MB executable, no runtime to install.
-- **Light:** about 30–60 MB of RAM, and no CPU use while idle (the interface
-  only redraws on input or when work finishes).
-- **Fine on integrated graphics:** it draws with OpenGL, so any iGPU handles it.
+- **One file:** a single executable, no runtime to install.
+- **Light:** tens of MB of RAM instead of hundreds, and no CPU use while idle
+  (the window only redraws on input or when work finishes).
+- **Fine on integrated graphics:** any iGPU with a Vulkan driver handles it.
 
 ## Toolkit
 
 | Option | Result | Cost | Look |
 | --- | --- | --- | --- |
-| **Rust + egui (recommended)** | ~10 MB single binary | Rewrite everything (~3,000 lines) | Clean but plain; themeable |
-| C++ + Dear ImGui | ~5 MB single binary | Rewrite everything, plus hand-picking HTTP, JSON, zip and keyring libraries | Developer-tool look |
-| Tauri (Rust + system webview) | ~10 MB, needs WebKitGTK installed | Rewrite only the back end; keep the React interface | Same as now |
+| **Rust + GPUI (chosen direction)** | single binary, needs Vulkan | Rewrite everything (~3,000 lines) | Polished, styled like Tailwind CSS; Zed's look |
+| Rust + egui | ~10 MB single binary, OpenGL | Rewrite everything | Clean but plain, Dear ImGui style |
+| Tauri (Rust + system webview) | ~10 MB, needs WebKitGTK | Rewrite only the back end; keep the React interface | Same as now |
 
-**Recommendation: Rust + egui.** It is the ImGui model (immediate mode, GPU
-drawn) with a mature ecosystem for everything Packmule does: HTTPS, JSON, zip,
-the system keyring and file dialogs. Dear ImGui would mean assembling those
-pieces by hand in C++. Tauri keeps today's interface but still depends on a
-browser engine on the user's system, which is the thing we're removing.
+**GPUI** is the GPU-accelerated Rust interface library Zed Industries built for
+the Zed editor. In November 2026 Discord announced it is rebuilding its desktop
+client on GPUI instead of Electron, so it has serious backing beyond Zed.
+On Linux it draws through Vulkan and supports both Wayland and X11.
+
+Widgets come from **gpui-component** (Longbridge): tables, sidebar, inputs,
+buttons, modals, tabs, checkboxes and theming, which covers everything the
+current React interface uses.
+
+Things to watch with GPUI:
+
+- **API churn:** it is developed inside the Zed repository and changes
+  without notice. Pin an exact version (or git revision) of `gpui` and
+  `gpui-component` together and upgrade deliberately.
+- **Thinner documentation** than egui; the Zed source and gpui-component's
+  examples are the main reference.
+- **Vulkan required:** fine for any machine that runs WoW, but no OpenGL
+  fallback.
+- **Heavier build:** a large dependency tree and long first compile.
+
+egui stays the fallback if GPUI turns out to be too unstable to pin.
 
 ### Crates
 
-- `eframe` / `egui` (window + interface), `egui_extras` (tables)
+- `gpui` + `gpui-component` (window, interface, theming)
 - `ureq` with rustls (HTTPS; supports the Range requests the zip index uses)
 - `serde` / `serde_json` (state, catalog, GitHub API, release.json)
 - `zip` (extraction)
@@ -47,15 +62,16 @@ browser engine on the user's system, which is the thing we're removing.
 Same design as the Electron app, minus the process split:
 
 ```
-ui thread (egui)  --Command-->  worker thread  --Event-->  ui thread
-  draws the latest AppState      one job at a time          StateChanged / Log
+ui (GPUI)  --Command-->  worker thread  --Event-->  ui
+  renders the AppState     one job at a time     StateChanged / Log
 ```
 
 - The **worker** owns the store and does all network and disk work, one
   command at a time. That is today's `serial()` queue, so installs still never
   overlap.
 - The **interface** only draws the latest `AppState` snapshot and sends
-  commands. The worker asks egui to repaint when something changes.
+  commands. The worker's events update a GPUI model, which re-renders only the views that
+  depend on it.
 - A timer thread sends `CheckUpdates` every N hours.
 
 ### Modules to port (1:1 with `src/main`)
@@ -77,10 +93,9 @@ ui thread (egui)  --Command-->  worker thread  --Event-->  ui thread
 
 - **Top bar:** game client picker, Check for updates, Update all, Settings,
   Installed / Browse tabs.
-- **Installed:** a table grouped by category with collapsing headers (egui's
-  `CollapsingHeader`), plus the add-by-URL bar and the manual rows.
+- **Installed:** a table grouped by category with collapsible groups, plus the add-by-URL bar and the manual rows.
 - **Browse:** a category side panel, search box and addon cards with Install.
-- **Settings:** a modal window with the same fields as now.
+- **Settings:** a modal dialog with the same fields as now.
 - **Log** panel, banners (path errors, Packmule update), and a theme matching
   today's dark and gold palette.
 
@@ -123,6 +138,6 @@ the Rust project moves to the root and the Electron sources are deleted.
 
 ## Open decisions
 
-1. Rust + egui, or one of the alternatives above.
+1. GPUI (current direction), or egui if pinning GPUI proves painful.
 2. Publish the Electron version as v0.1.0 now, or wait for the native one to
    be the first public release.
