@@ -1,5 +1,5 @@
 const API = 'https://api.github.com'
-const USER_AGENT = 'wow-addon-mgr'
+const USER_AGENT = 'packmule'
 
 export interface ReleaseAsset {
   id: number

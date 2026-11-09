@@ -17,7 +17,7 @@ async function exists(p: string): Promise<boolean> {
 }
 
 async function download(url: string, dest: string): Promise<void> {
-  const res = await fetch(url, { headers: { 'User-Agent': 'wow-addon-mgr' } })
+  const res = await fetch(url, { headers: { 'User-Agent': 'packmule' } })
   if (!res.ok || !res.body) throw new Error(`Download failed (${res.status}): ${url}`)
   await pipeline(Readable.fromWeb(res.body as NodeReadableStream), createWriteStream(dest))
 }
@@ -112,7 +112,7 @@ export async function installAsset(opts: {
   foreignFolders: Set<string>
 }): Promise<string[]> {
   const { addonsPath, asset, previousFolders, foreignFolders } = opts
-  const staging = path.join(path.dirname(path.dirname(addonsPath)), '.wow-addon-mgr-tmp', randomUUID())
+  const staging = path.join(path.dirname(path.dirname(addonsPath)), '.packmule-tmp', randomUUID())
   const extracted = path.join(staging, 'extracted')
   const backup = path.join(staging, 'backup')
   await fs.mkdir(extracted, { recursive: true })

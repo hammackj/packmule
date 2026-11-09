@@ -1,7 +1,19 @@
 {
-  "name": "wow-addon-mgr",
+  "name": "packmule",
+  "productName": "Packmule",
   "version": "0.1.0",
-  "description": "Minimal World of Warcraft addon manager that installs addons from GitHub releases",
+  "description": "Install and update World of Warcraft addons from GitHub releases and CurseForge",
+  "author": {
+    "name": "hammackj",
+    "email": "hammackj@users.noreply.github.com"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/hammackj/packmule",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hammackj/packmule.git"
+  },
+  "desktopName": "packmule.desktop",
   "main": "out/main/index.js",
   "private": true,
   "scripts": {
@@ -9,7 +21,40 @@
     "build": "electron-vite build",
     "start": "electron-vite preview",
     "typecheck": "tsc --noEmit",
-    "postinstall": "install-electron"
+    "postinstall": "install-electron",
+    "dist": "electron-vite build && electron-builder --linux",
+    "catalog": "node scripts/update-catalog.mjs"
+  },
+  "build": {
+    "appId": "io.github.hammackj.packmule",
+    "productName": "Packmule",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "out/**",
+      "packaging/packmule-256.png",
+      "package.json"
+    ],
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb",
+        "pacman"
+      ],
+      "executableName": "packmule",
+      "icon": "packaging/packmule-512.png",
+      "category": "Game",
+      "synopsis": "World of Warcraft addon manager",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "syncDesktopName": true
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "hammackj",
+      "repo": "packmule",
+      "releaseType": "release"
+    }
   },
   "devDependencies": {
     "@types/node": "^26.6.3",
@@ -18,6 +63,7 @@
     "@types/yauzl": "^3.4.0",
     "@vitejs/plugin-react": "^5.2.0",
     "electron": "^44.4.5",
+    "electron-builder": "^26.18.0",
     "electron-vite": "^5.0.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

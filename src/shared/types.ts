@@ -74,6 +74,8 @@ export type AddonStatus =
 export interface AddonView extends AddonRecord {
   status: AddonStatus
   busy: boolean
+  /** From the addon's .toc "## Category", else the catalog, else null */
+  category: string | null
 }
 
 /** An AddOns folder the app didn't install (e.g. unzipped by hand); never modified */
@@ -83,6 +85,41 @@ export interface ManualAddon {
   title: string | null
   version: string | null
   author: string | null
+  category: string | null
+}
+
+/** An addon offered in the Browse tab (catalog.json). */
+export interface CatalogEntry {
+  /** Stable id, e.g. "bigwigs" */
+  id: string
+  name: string
+  /** GitHub "owner/repo" */
+  repo: string
+  /** Release stream for repos that publish several products ("" = unprefixed tags) */
+  tagPrefix?: string
+  /** Category, using the in-game AddOns list names where one exists */
+  category: string
+  description: string
+  /**
+   * Game flavors the releases have builds for, as named in the BigWigs
+   * packager's release.json ("forever", "mainline", "classic", "mists", ...).
+   */
+  flavors: string[]
+  /** Other catalog ids this addon needs */
+  requires?: string[]
+}
+
+export interface CatalogView extends CatalogEntry {
+  installed: boolean
+  /** Has a build for the active game client */
+  available: boolean
+  busy: boolean
+}
+
+/** A newer Packmule release on GitHub */
+export interface AppUpdate {
+  version: string
+  url: string
 }
 
 export interface AppState {
@@ -94,6 +131,11 @@ export interface AppState {
   addons: AddonView[]
   /** Folders in AddOns not owned by any managed addon */
   unmanaged: ManualAddon[]
+  catalog: CatalogView[]
+  /** Flavor name of the active client ("forever", "mainline", ...), null if unknown */
+  flavor: string | null
+  appVersion: string
+  appUpdate: AppUpdate | null
   checking: boolean
   lastCheck: string | null
   pathError: string | null
@@ -113,6 +155,7 @@ export interface Api {
   updateSettings(update: SettingsUpdate): Promise<AppState>
   pickFolder(): Promise<string | null>
   addAddon(url: string): Promise<AppState>
+  installCatalog(id: string): Promise<AppState>
   removeAddon(key: string): Promise<AppState>
   installAddon(key: string): Promise<AppState>
   updateAll(): Promise<AppState>

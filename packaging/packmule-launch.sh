@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Launch the WoW Addon Manager desktop app.
+# Launch the Packmule desktop app.
 #
 # Started from a menu there is no terminal to read, so a missing dependency or
 # a failed build would show as a window that never appears. Each of those is
@@ -12,11 +12,11 @@ MAIN="$REPO/out/main/index.js"
 
 fail() {
     if command -v kdialog >/dev/null 2>&1; then
-        kdialog --title "WoW Addon Manager" --error "$1"
+        kdialog --title "Packmule" --error "$1"
     elif command -v zenity >/dev/null 2>&1; then
-        zenity --error --title="WoW Addon Manager" --text="$1"
+        zenity --error --title="Packmule" --text="$1"
     else
-        printf 'WoW Addon Manager: %s\n' "$1" >&2
+        printf 'Packmule: %s\n' "$1" >&2
     fi
     exit 1
 }

@@ -12,6 +12,7 @@ const api: Api = {
   updateSettings: (update) => ipcRenderer.invoke('settings:update', update),
   pickFolder: () => ipcRenderer.invoke('dialog:pickFolder'),
   addAddon: (url) => ipcRenderer.invoke('addon:add', url),
+  installCatalog: (id) => ipcRenderer.invoke('catalog:install', id),
   removeAddon: (key) => ipcRenderer.invoke('addon:remove', key),
   installAddon: (key) => ipcRenderer.invoke('addon:install', key),
   updateAll: () => ipcRenderer.invoke('addons:updateAll'),

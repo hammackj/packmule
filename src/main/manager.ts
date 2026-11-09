@@ -1,12 +1,26 @@
 import { EventEmitter } from 'node:events'
 import path from 'node:path'
-import { addonKey, type AddonRecord, type AddonView, type AppState, type GameInstall, type LogEntry, type Settings } from '../shared/types'
+import {
+  addonKey,
+  type AddonRecord,
+  type AddonView,
+  type AppState,
+  type AppUpdate,
+  type CatalogView,
+  type GameInstall,
+  type LogEntry,
+  type Settings
+} from '../shared/types'
+import { catalogEntries, catalogEntry, matchesEntry, productFlavor, refreshCatalog } from './catalog'
 import { CurseForgeClient, parseCurseForgeUrl } from './curseforge'
 import { addonsDir, detectInstalls } from './game'
 import { GitHubClient, parseRepo, type ReleaseAsset } from './github'
 import { installAsset, listAddonFolders, removeFolders, verifyFolders } from './installer'
 import { Store } from './store'
 import { readTocInfo } from './toc'
+import { newerVersion } from './version'
+
+const APP_REPO = 'hammackj/packmule'
 
 export class Manager extends EventEmitter {
   private store = new Store()
@@ -20,12 +34,35 @@ export class Manager extends EventEmitter {
   private timer: NodeJS.Timeout | null = null
   /** Serializes filesystem-changing work so installs never interleave */
   private queue: Promise<unknown> = Promise.resolve()
+  private appUpdate: AppUpdate | null = null
+
+  /** appVersion: this build's version, compared against Packmule's GitHub releases */
+  constructor(private appVersion: string) {
+    super()
+  }
 
   async init(): Promise<void> {
     await this.store.load()
     await this.refreshInstalls()
     this.scheduleChecks()
     if (this.activeInstall) void this.checkUpdates().catch(() => {})
+    void refreshCatalog().then(() => this.changed())
+    void this.checkAppUpdate()
+  }
+
+  /** Looks for a newer Packmule release; shown as a banner, never installed automatically. */
+  private async checkAppUpdate(): Promise<void> {
+    try {
+      const release = await this.github.latestRelease(APP_REPO)
+      const latest = release.tag_name.replace(/^v/, '')
+      if (newerVersion(latest, this.appVersion)) {
+        this.appUpdate = { version: latest, url: release.html_url }
+        this.log('info', `Packmule ${latest} is available (you have ${this.appVersion})`)
+        await this.changed()
+      }
+    } catch {
+      // No releases yet, offline or rate limited: try again next launch.
+    }
   }
 
   private log(level: LogEntry['level'], message: string): void {
@@ -107,7 +144,15 @@ export class Manager extends EventEmitter {
         }
       } else if (r.latestTag && r.latestTag !== r.installedTag) status = 'update-available'
       else if (r.latestTag) status = 'up-to-date'
-      addons.push({ ...r, status, busy: this.busy.has(addonKey(r)) })
+      const toc = r.folders[0] && install ? await readTocInfo(path.join(this.addonsPath, r.folders[0]), install.product) : null
+      const fromCatalog = catalogEntries().find((e) => matchesEntry(r, e))
+      addons.push({
+        ...r,
+        name: r.name ?? fromCatalog?.name,
+        status,
+        busy: this.busy.has(addonKey(r)),
+        category: toc?.category ?? fromCatalog?.category ?? null
+      })
     }
     const unmanaged: AppState['unmanaged'] = []
     if (install) {
@@ -118,6 +163,17 @@ export class Manager extends EventEmitter {
       }
     }
 
+    const flavor = install ? productFlavor(install.product) : null
+    const catalog: CatalogView[] = catalogEntries().map((e) => {
+      const record = this.records.find((r) => matchesEntry(r, e))
+      return {
+        ...e,
+        installed: install !== null && record !== undefined && record.installedTag !== null,
+        available: flavor !== null && e.flavors.includes(flavor),
+        busy: record !== undefined && this.busy.has(addonKey(record))
+      }
+    })
+
     const { settings } = this.store
     return {
       settings: { ...settings, githubToken: '', curseforgeApiKey: '' } satisfies Settings,
@@ -127,6 +183,10 @@ export class Manager extends EventEmitter {
       activeInstall: install,
       addons,
       unmanaged,
+      catalog,
+      flavor,
+      appVersion: this.appVersion,
+      appUpdate: this.appUpdate,
       checking: this.checking,
       lastCheck: this.lastCheck,
       pathError: this.pathError
@@ -222,32 +282,56 @@ export class Manager extends EventEmitter {
         }
         if (streams.length === 1 && streams[0]) tagPrefix = streams[0]
       }
-      const key = addonKey({ repo, tagPrefix })
-      if (this.records.some((r) => addonKey(r).toLowerCase() === key.toLowerCase())) {
-        throw new Error(`${key} is already managed`)
-      }
-      const record: AddonRecord = {
-        repo,
-        source: slug ? 'curseforge' : 'github',
-        ...(tagPrefix !== undefined ? { tagPrefix } : {}),
-        installedTag: null,
-        installedAssetId: null,
-        folders: [],
-        installedAt: null,
-        latestTag: null,
-        latestAssetName: null,
-        lastChecked: null,
-        compatWarning: null,
-        error: null
-      }
-      // Validate before saving: must have a packaged release.
-      await this.resolveLatest(record, install)
-      this.records.push(record)
-      await this.persist()
-      this.log('info', `Added ${key}`)
-      await this.install(record)
+      await this.addRecord(install, slug ? 'curseforge' : 'github', repo, tagPrefix)
       return this.state()
     })
+  }
+
+  /** Installs an addon from the Browse tab's catalog. */
+  installCatalog(id: string): Promise<AppState> {
+    return this.serial(async () => {
+      const install = this.requireInstall()
+      const entry = catalogEntry(id)
+      if (!entry) throw new Error(`Unknown catalog addon: ${id}`)
+      const existing = this.records.find((r) => matchesEntry(r, entry))
+      if (existing) await this.install(existing)
+      else await this.addRecord(install, 'github', entry.repo, entry.tagPrefix, entry.name)
+      return this.state()
+    })
+  }
+
+  private async addRecord(
+    install: GameInstall,
+    source: AddonRecord['source'],
+    repo: string,
+    tagPrefix: string | undefined,
+    name?: string
+  ): Promise<void> {
+    const key = addonKey({ repo, tagPrefix })
+    if (this.records.some((r) => addonKey(r).toLowerCase() === key.toLowerCase())) {
+      throw new Error(`${key} is already managed`)
+    }
+    const record: AddonRecord = {
+      repo,
+      source,
+      ...(tagPrefix !== undefined ? { tagPrefix } : {}),
+      ...(name ? { name } : {}),
+      installedTag: null,
+      installedAssetId: null,
+      folders: [],
+      installedAt: null,
+      latestTag: null,
+      latestAssetName: null,
+      lastChecked: null,
+      compatWarning: null,
+      error: null
+    }
+    // Validate before saving: must have a packaged release.
+    await this.resolveLatest(record, install)
+    this.records.push(record)
+    await this.persist()
+    this.log('info', `Added ${key}`)
+    await this.install(record)
   }
 
   removeAddon(key: string): Promise<AppState> {

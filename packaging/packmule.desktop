@@ -1,12 +1,12 @@
 [Desktop Entry]
 Type=Application
-Name=WoW Addon Manager
-GenericName=Addon Manager
+Name=Packmule
+GenericName=World of Warcraft Addon Manager
 Comment=Install and update World of Warcraft addons from GitHub releases
-Exec=__REPO__/packaging/wow-addon-mgr-launch.sh
-Icon=wow-addon-mgr
+Exec=__REPO__/packaging/packmule-launch.sh
+Icon=packmule
 Terminal=false
 Categories=Game;
 Keywords=wow;warcraft;addon;addons;forever;
-StartupWMClass=wow-addon-mgr
+StartupWMClass=packmule
 StartupNotify=true

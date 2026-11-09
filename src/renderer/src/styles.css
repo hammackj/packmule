@@ -332,3 +332,160 @@ td.actions button + button {
 .row.end {
   justify-content: flex-end;
 }
+
+/* Tabs */
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  margin-right: 8px;
+}
+
+.tabs button {
+  background: none;
+  border-color: transparent;
+  color: var(--muted);
+}
+
+.tabs button.active {
+  background: var(--panel-2);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.banner.info {
+  background: #172636;
+  border: 1px solid var(--info);
+}
+
+/* Installed: category groups, like the in-game AddOns list */
+
+tr.group td {
+  padding: 6px 12px;
+  background: var(--panel-2);
+}
+
+.group-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  font-weight: 600;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chevron {
+  width: 12px;
+  color: var(--muted);
+}
+
+.count {
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* Browse */
+
+.browse {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.categories {
+  width: 210px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 8px;
+  border-right: 1px solid var(--border);
+  background: var(--panel);
+  overflow: auto;
+}
+
+.categories button {
+  text-align: left;
+  background: none;
+  border-color: transparent;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.categories button.active {
+  background: var(--panel-2);
+  border-color: var(--border);
+  color: var(--accent);
+}
+
+.catalog {
+  flex: 1;
+  overflow: auto;
+  padding: 12px 16px 16px;
+}
+
+.catalog-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.catalog-bar input:not([type='checkbox']) {
+  flex: 1;
+  max-width: 360px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.card.unavailable {
+  opacity: 0.6;
+}
+
+.card header,
+.card footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card header .source {
+  margin-left: auto;
+}
+
+.card p {
+  margin: 0;
+  flex: 1;
+}
+
+/* Cards reuse <footer>; undo the page footer's bar styling there. */
+.card footer {
+  padding: 8px 0 0;
+  border-top: 1px solid var(--border);
+  background: none;
+}

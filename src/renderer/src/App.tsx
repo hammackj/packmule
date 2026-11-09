@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { addonKey, type AddonStatus, type AddonView, type AppState, type LogEntry, type ManualAddon } from '../../shared/types'
+import Browse from './Browse'
 import Settings from './Settings'
 
 const api = window.api
@@ -44,6 +45,8 @@ export default function App(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null)
   const [showSettings, setShowSettings] = useState(false)
   const [showLog, setShowLog] = useState(false)
+  const [tab, setTab] = useState<'installed' | 'browse'>('installed')
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     void api.getState().then((s) => {
@@ -84,7 +87,15 @@ export default function App(): React.JSX.Element {
   return (
     <div className="app">
       <header className="topbar">
-        <h1>Addon Manager</h1>
+        <h1>Packmule</h1>
+        <nav className="tabs">
+          <button className={tab === 'installed' ? 'active' : ''} onClick={() => setTab('installed')}>
+            Installed
+          </button>
+          <button className={tab === 'browse' ? 'active' : ''} onClick={() => setTab('browse')}>
+            Browse
+          </button>
+        </nav>
         <select
           value={state.settings.activeInstall}
           onChange={(e) => void run(() => api.updateSettings({ activeInstall: e.target.value }))}
@@ -110,6 +121,12 @@ export default function App(): React.JSX.Element {
         <button onClick={() => setShowSettings(true)}>Settings</button>
       </header>
 
+      {state.appUpdate && (
+        <div className="banner info">
+          Packmule {state.appUpdate.version} is available (you have {state.appVersion}).
+          <button onClick={() => void api.openExternal(state.appUpdate!.url)}>Download</button>
+        </div>
+      )}
       {state.pathError && (
         <div className="banner warn">
           {state.pathError} <button onClick={() => setShowSettings(true)}>Open settings</button>
@@ -121,6 +138,10 @@ export default function App(): React.JSX.Element {
         </div>
       )}
 
+      {tab === 'browse' ? (
+        <Browse state={state} disabled={anyBusy} run={run} />
+      ) : (
+      <>
       <form className="addbar" onSubmit={(e) => void add(e)}>
         <input
           placeholder="https://github.com/owner/repo or https://www.curseforge.com/wow/addons/name"
@@ -136,8 +157,12 @@ export default function App(): React.JSX.Element {
       <main>
         {state.addons.length === 0 && state.unmanaged.length === 0 ? (
           <div className="empty">
-            No addons yet. Paste a GitHub repository URL (it must publish packaged releases
-            with a .zip asset) or a CurseForge addon URL (needs an API key in Settings).
+            No addons yet. Find some on the{' '}
+            <button className="link" onClick={() => setTab('browse')}>
+              Browse
+            </button>{' '}
+            tab, or paste a GitHub repository URL (it must publish packaged releases with a .zip asset)
+            or a CurseForge addon URL (needs an API key in Settings).
           </div>
         ) : (
           <table>
@@ -151,12 +176,34 @@ export default function App(): React.JSX.Element {
               </tr>
             </thead>
             <tbody>
-              {state.addons.map((a) => (
-                <AddonRow key={addonKey(a)} addon={a} disabled={anyBusy} run={run} />
-              ))}
-              {state.unmanaged.map((m) => (
-                <ManualRow key={m.folder} addon={m} />
-              ))}
+              {groupByCategory(state.addons, state.unmanaged).map(([category, managed, manual]) => {
+                const open = !collapsed.has(category)
+                return (
+                  <Fragment key={category}>
+                    <tr className="group">
+                      <td colSpan={5}>
+                        <button
+                          className="group-toggle"
+                          onClick={() =>
+                            setCollapsed((c) => {
+                              const next = new Set(c)
+                              if (open) next.add(category)
+                              else next.delete(category)
+                              return next
+                            })
+                          }
+                        >
+                          <span className="chevron">{open ? '▾' : '▸'}</span> {category}
+                          <span className="count">{managed.length + manual.length}</span>
+                        </button>
+                      </td>
+                    </tr>
+                    {open &&
+                      managed.map((a) => <AddonRow key={addonKey(a)} addon={a} disabled={anyBusy} run={run} />)}
+                    {open && manual.map((m) => <ManualRow key={m.folder} addon={m} />)}
+                  </Fragment>
+                )
+              })}
             </tbody>
           </table>
         )}
@@ -168,6 +215,8 @@ export default function App(): React.JSX.Element {
           </p>
         )}
       </main>
+      </>
+      )}
 
       <footer>
         <span className="muted small">
@@ -206,6 +255,31 @@ export default function App(): React.JSX.Element {
       )}
     </div>
   )
+}
+
+const OTHER = 'Other'
+
+/**
+ * Groups addons under their .toc category, like the in-game AddOns list.
+ * Addons without one go under "Other", last.
+ */
+function groupByCategory(addons: AddonView[], manual: ManualAddon[]): [string, AddonView[], ManualAddon[]][] {
+  const groups = new Map<string, [AddonView[], ManualAddon[]]>()
+  const group = (name: string | null): [AddonView[], ManualAddon[]] => {
+    const key = name ?? OTHER
+    let g = groups.get(key)
+    if (!g) {
+      g = [[], []]
+      groups.set(key, g)
+    }
+    return g
+  }
+  for (const a of addons) group(a.category)[0].push(a)
+  for (const m of manual) group(m.category)[1].push(m)
+  for (const [, [a]] of groups) a.sort((x, y) => addonLabel(x).localeCompare(addonLabel(y)))
+  return [...groups.entries()]
+    .sort(([a], [b]) => (a === OTHER ? 1 : b === OTHER ? -1 : a.localeCompare(b)))
+    .map(([name, [a, m]]) => [name, a, m])
 }
 
 function ManualRow({ addon: m }: { addon: ManualAddon }): React.JSX.Element {

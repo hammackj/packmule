@@ -1,3 +1,4 @@
+import { copyFileSync, existsSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import type { SettingsUpdate } from '../shared/types'
@@ -5,12 +6,22 @@ import { Manager } from './manager'
 
 // Pin the data dir so it doesn't depend on how Electron was launched
 // (running out/main/index.js directly would otherwise use ~/.config/Electron).
-app.setName('wow-addon-mgr')
-app.setPath('userData', path.join(app.getPath('appData'), 'wow-addon-mgr'))
-// Must match packaging/wow-addon-mgr.desktop so the taskbar pairs the window with its icon.
-if (process.platform === 'linux') app.setDesktopName('wow-addon-mgr.desktop')
+app.setName('packmule')
+const userData = path.join(app.getPath('appData'), 'packmule')
+app.setPath('userData', userData)
+// Must match packaging/packmule.desktop so the taskbar pairs the window with its icon.
+if (process.platform === 'linux') app.setDesktopName('packmule.desktop')
 
-const manager = new Manager()
+// The app was called wow-addon-mgr before; carry its settings and addon list
+// over once. The old folder is left in place.
+const legacyState = path.join(app.getPath('appData'), 'wow-addon-mgr', 'state.json')
+const state = path.join(userData, 'state.json')
+if (!existsSync(state) && existsSync(legacyState)) {
+  mkdirSync(userData, { recursive: true })
+  copyFileSync(legacyState, state)
+}
+
+const manager = new Manager(app.getVersion())
 let win: BrowserWindow | null = null
 
 function createWindow(): void {
@@ -19,10 +30,10 @@ function createWindow(): void {
     height: 720,
     minWidth: 760,
     minHeight: 480,
-    title: 'WoW Addon Manager',
+    title: 'Packmule',
     backgroundColor: '#15171c',
     autoHideMenuBar: true,
-    icon: path.join(__dirname, '../../packaging/wow-addon-mgr-256.png'),
+    icon: path.join(__dirname, '../../packaging/packmule-256.png'),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -47,6 +58,7 @@ function registerIpc(): void {
   ipcMain.handle('state:get', () => manager.state())
   ipcMain.handle('settings:update', (_e, update: SettingsUpdate) => manager.updateSettings(update))
   ipcMain.handle('addon:add', (_e, url: string) => manager.addAddon(url))
+  ipcMain.handle('catalog:install', (_e, id: string) => manager.installCatalog(id))
   ipcMain.handle('addon:remove', (_e, key: string) => manager.removeAddon(key))
   ipcMain.handle('addon:install', (_e, key: string) => manager.installAddon(key))
   ipcMain.handle('addons:updateAll', () => manager.updateAll())

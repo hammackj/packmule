@@ -1,0 +1,303 @@
+{
+  "version": 1,
+  "addons": [
+    {
+      "id": "satchel",
+      "name": "Satchel",
+      "repo": "hammackj/satchel",
+      "category": "Bags & Inventory",
+      "description": "All your bags in one window, plus your bank anywhere, other characters' bags, item counts on tooltips, sell junk, item levels and upgrade arrows.",
+      "flavors": [
+        "forever"
+      ]
+    },
+    {
+      "id": "allthethings",
+      "name": "All The Things",
+      "repo": "ATTWoWAddon/AllTheThings",
+      "category": "Collections",
+      "description": "Tracks everything collectible (appearances, mounts, pets, toys, achievements, quests) and shows where to get what you're missing.",
+      "flavors": [
+        "bcc",
+        "cata",
+        "classic",
+        "forever",
+        "mainline",
+        "mists",
+        "titan",
+        "wrath"
+      ]
+    },
+    {
+      "id": "questie",
+      "name": "Questie",
+      "repo": "Questie/Questie",
+      "tagPrefix": "bundle/",
+      "category": "Quests",
+      "description": "Shows quest givers, objectives and turn-ins on the world map and minimap.",
+      "flavors": [
+        "bcc",
+        "classic",
+        "forever",
+        "mists",
+        "wrath"
+      ]
+    },
+    {
+      "id": "questie-classic",
+      "name": "Questie",
+      "repo": "Questie/Questie",
+      "tagPrefix": "",
+      "category": "Quests",
+      "description": "Shows quest givers, objectives and turn-ins on the world map and minimap.",
+      "flavors": [
+        "bcc",
+        "classic",
+        "mists",
+        "wrath"
+      ]
+    },
+    {
+      "id": "dialogueui",
+      "name": "DialogueUI",
+      "repo": "Peterodox/YUI-Dialogue",
+      "category": "Quests",
+      "description": "Replaces the quest and gossip windows with a cleaner, cinematic dialogue view.",
+      "flavors": [
+        "forever"
+      ]
+    },
+    {
+      "id": "spoken",
+      "name": "Spoken",
+      "repo": "rusty-key/spoken-wow",
+      "tagPrefix": "spoken/",
+      "category": "Audio & Video",
+      "description": "Voice-over for quest text, books, zones and bosses. This is the core addon; add the audio packs you want.",
+      "flavors": [
+        "forever"
+      ]
+    },
+    {
+      "id": "spoken-quests",
+      "name": "Spoken: Quests (English)",
+      "repo": "rusty-key/spoken-wow",
+      "tagPrefix": "quests-audio/",
+      "category": "Audio & Video",
+      "description": "English quest narration for Spoken.",
+      "flavors": [
+        "forever"
+      ],
+      "requires": [
+        "spoken"
+      ]
+    },
+    {
+      "id": "spoken-places",
+      "name": "Spoken: Zones (English)",
+      "repo": "rusty-key/spoken-wow",
+      "tagPrefix": "places-audio/",
+      "category": "Audio & Video",
+      "description": "English zone and place narration for Spoken.",
+      "flavors": [
+        "forever"
+      ],
+      "requires": [
+        "spoken"
+      ]
+    },
+    {
+      "id": "spoken-readables",
+      "name": "Spoken: Books (English)",
+      "repo": "rusty-key/spoken-wow",
+      "tagPrefix": "readables-audio/",
+      "category": "Audio & Video",
+      "description": "English narration for books, letters and plaques, for Spoken.",
+      "flavors": [
+        "forever"
+      ],
+      "requires": [
+        "spoken"
+      ]
+    },
+    {
+      "id": "spoken-bosses",
+      "name": "Spoken: Bosses (English)",
+      "repo": "rusty-key/spoken-wow",
+      "tagPrefix": "bosses-audio/",
+      "category": "Audio & Video",
+      "description": "English boss voice lines for Spoken.",
+      "flavors": [
+        "forever"
+      ],
+      "requires": [
+        "spoken"
+      ]
+    },
+    {
+      "id": "bigwigs",
+      "name": "BigWigs",
+      "repo": "BigWigsMods/BigWigs",
+      "category": "Boss Encounters",
+      "description": "Raid boss timers, warnings and sounds.",
+      "flavors": [
+        "bcc",
+        "cata",
+        "classic",
+        "forever",
+        "mainline",
+        "mists",
+        "titan",
+        "wrath"
+      ]
+    },
+    {
+      "id": "littlewigs",
+      "name": "LittleWigs",
+      "repo": "BigWigsMods/LittleWigs",
+      "category": "Boss Encounters",
+      "description": "BigWigs timers and warnings for dungeon bosses.",
+      "flavors": [
+        "bcc",
+        "cata",
+        "classic",
+        "forever",
+        "mainline",
+        "mists",
+        "titan",
+        "wrath"
+      ],
+      "requires": [
+        "bigwigs"
+      ]
+    },
+    {
+      "id": "dbm",
+      "name": "Deadly Boss Mods",
+      "repo": "DeadlyBossMods/DeadlyBossMods",
+      "category": "Boss Encounters",
+      "description": "Boss timers, warnings and alerts for raids and dungeons.",
+      "flavors": [
+        "bcc",
+        "cata",
+        "classic",
+        "forever",
+        "mainline",
+        "mists",
+        "titan",
+        "wrath"
+      ]
+    },
+    {
+      "id": "plater",
+      "name": "Plater",
+      "repo": "Tercioo/Plater-Nameplates",
+      "category": "Nameplates",
+      "description": "Highly customizable nameplates with threat colors, cast bars and scripting.",
+      "flavors": [
+        "bcc",
+        "classic",
+        "forever",
+        "mainline",
+        "mists",
+        "titan"
+      ]
+    },
+    {
+      "id": "kuinameplates",
+      "name": "KuiNameplates",
+      "repo": "kesava-wow/kuinameplates2",
+      "category": "Nameplates",
+      "description": "Light, clean nameplates.",
+      "flavors": [
+        "classic",
+        "mainline",
+        "mists"
+      ]
+    },
+    {
+      "id": "bartender4",
+      "name": "Bartender4",
+      "repo": "Nevcairiel/Bartender4",
+      "category": "Action Bars",
+      "description": "Replaces the action bars with fully movable, configurable bars.",
+      "flavors": [
+        "bcc",
+        "classic",
+        "forever",
+        "mainline",
+        "mists"
+      ]
+    },
+    {
+      "id": "dominos",
+      "name": "Dominos",
+      "repo": "tullamods/Dominos",
+      "category": "Action Bars",
+      "description": "Movable, configurable action bars that keep the default look.",
+      "flavors": [
+        "bcc",
+        "classic",
+        "forever",
+        "mainline",
+        "mists",
+        "titan"
+      ]
+    },
+    {
+      "id": "omnicc",
+      "name": "OmniCC",
+      "repo": "tullamods/OmniCC",
+      "category": "Combat",
+      "description": "Cooldown countdown numbers on buttons, buffs and debuffs.",
+      "flavors": [
+        "bcc",
+        "classic",
+        "mainline",
+        "mists",
+        "titan"
+      ]
+    },
+    {
+      "id": "weakauras",
+      "name": "WeakAuras",
+      "repo": "WeakAuras/WeakAuras2",
+      "category": "Combat",
+      "description": "Build your own on-screen alerts for buffs, cooldowns, procs and more.",
+      "flavors": [
+        "bcc",
+        "cata",
+        "classic",
+        "mists",
+        "titan"
+      ]
+    },
+    {
+      "id": "mapster",
+      "name": "Mapster",
+      "repo": "Nevcairiel/Mapster",
+      "category": "Map & Minimap",
+      "description": "World map tweaks: scale, transparency, coordinates and fog of war removal.",
+      "flavors": [
+        "forever",
+        "mainline"
+      ]
+    },
+    {
+      "id": "advancedinterfaceoptions",
+      "name": "Advanced Interface Options",
+      "repo": "Stanzilla/AdvancedInterfaceOptions",
+      "category": "Interface Enhancements",
+      "description": "Restores interface settings Blizzard removed from the options menu, and a CVar browser.",
+      "flavors": [
+        "bcc",
+        "cata",
+        "classic",
+        "forever",
+        "mainline",
+        "mists",
+        "wrath"
+      ]
+    }
+  ]
+}

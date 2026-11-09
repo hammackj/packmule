@@ -1,7 +1,7 @@
 import type { ReleaseAsset } from './github'
 
 const API = 'https://api.curseforge.com/v1'
-const USER_AGENT = 'wow-addon-mgr'
+const USER_AGENT = 'packmule'
 const WOW_GAME_ID = 1
 const RELEASE = 1 // releaseType: 1 = release, 2 = beta, 3 = alpha
 
