@@ -105,6 +105,8 @@ pub enum Event {
     Log(LogEntry),
     /// A command failed; shown to the user.
     Failed(String),
+    /// The worker finished a command sent by the interface.
+    CommandDone,
 }
 
 /// A settings change; None leaves a field alone.
@@ -183,9 +185,9 @@ impl Manager {
         (self.emit)(Event::Log(LogEntry { time: now(), level, message: message.into() }));
     }
 
-    /// Tells the interface a command failed.
-    pub fn emit_failure(&self, message: String) {
-        (self.emit)(Event::Failed(message));
+    /// Sends an event to the interface.
+    pub fn emit(&self, event: Event) {
+        (self.emit)(event);
     }
 
     /// Sends the current state to the interface.

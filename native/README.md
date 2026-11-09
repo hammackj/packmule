@@ -1,10 +1,15 @@
 # Packmule native
 
-The Rust rebuild of Packmule (see `../docs/native-rebuild.md`). Phase 1, the
-core with no interface, is done; the GPUI interface comes next.
+The Rust rebuild of Packmule (see `../docs/native-rebuild.md`): the core
+library here, and the GPUI interface in `app/`.
 
 ```sh
-cargo test                                              # everything, offline
+cargo run --release -p packmule-app   # the app (close the Electron Packmule first)
+XDG_CONFIG_HOME=/tmp/pm cargo run -p packmule-app   # on a copy: /tmp/pm/packmule/state.json
+```
+
+```sh
+cargo test -p packmule                                  # the core, offline
 cargo run --example cli -- --config <dir> status        # read a state.json
 cargo run --example cli -- --config <dir> check         # live update check (network)
 cargo run --example cli -- --config <dir> update --yes  # install updates (changes AddOns!)

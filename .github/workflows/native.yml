@@ -21,6 +21,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: native
-      - run: cargo fmt --check
-      - run: cargo clippy --all-targets -- -D warnings
-      - run: cargo test
+      # The core only: the GPUI app needs the Linux graphics headers (phase 3).
+      - run: cargo fmt --all --check
+      - run: cargo clippy -p packmule --all-targets -- -D warnings
+      - run: cargo test -p packmule

@@ -28,7 +28,7 @@ fn main() -> anyhow::Result<()> {
         Manager::new(store, Arc::new(UreqHttp::new()), Catalog::default(), env!("CARGO_PKG_VERSION"), |e| match e {
             Event::Log(l) => eprintln!("{} {}", if l.level == LogLevel::Error { "ERR " } else { "    " }, l.message),
             Event::Failed(msg) => eprintln!("FAILED {msg}"),
-            Event::State(_) => {}
+            Event::State(_) | Event::CommandDone => {}
         });
 
     match args.first().map(String::as_str) {

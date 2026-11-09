@@ -310,7 +310,7 @@ fn worker_runs_commands_in_order_and_reports_failures() {
                     break;
                 }
             }
-            Event::Log(_) => {}
+            Event::Log(_) | Event::CommandDone => {}
         }
     }
     assert_eq!(failures.len(), 1, "{failures:?}");

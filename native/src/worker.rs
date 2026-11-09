@@ -5,7 +5,7 @@ use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
-use crate::manager::{Manager, SettingsUpdate};
+use crate::manager::{Event, Manager, SettingsUpdate};
 
 #[derive(Debug, Clone)]
 pub enum Command {
@@ -19,6 +19,9 @@ pub enum Command {
     UpdateAll,
     CheckUpdates,
     Shutdown,
+    /// The automatic check timer fired (internal).
+    #[doc(hidden)]
+    Timer,
 }
 
 pub struct Worker {
@@ -77,7 +80,7 @@ fn run(mut m: Manager, rx: Receiver<Command>, startup_checks: bool) {
                 let wait = every.saturating_sub(last_check.elapsed());
                 match rx.recv_timeout(wait) {
                     Ok(cmd) => cmd,
-                    Err(RecvTimeoutError::Timeout) => Command::CheckUpdates,
+                    Err(RecvTimeoutError::Timeout) => Command::Timer,
                     Err(RecvTimeoutError::Disconnected) => return,
                 }
             }
@@ -86,6 +89,7 @@ fn run(mut m: Manager, rx: Receiver<Command>, startup_checks: bool) {
                 Err(_) => return,
             },
         };
+        let from_ui = !matches!(cmd, Command::Shutdown | Command::Timer);
         match cmd {
             Command::Shutdown => return,
             Command::Refresh => m.changed(),
@@ -95,19 +99,22 @@ fn run(mut m: Manager, rx: Receiver<Command>, startup_checks: bool) {
             Command::InstallAddon(key) => report(&mut m, |m| m.install_addon(&key)),
             Command::RemoveAddon(key) => report(&mut m, |m| m.remove_addon(&key)),
             Command::UpdateAll => report(&mut m, |m| m.update_all()),
-            Command::CheckUpdates => {
+            Command::CheckUpdates | Command::Timer => {
                 last_check = Instant::now();
                 if m.has_active_install() {
                     report(&mut m, |m| m.check_updates());
                 }
             }
         }
+        if from_ui {
+            m.emit(Event::CommandDone);
+        }
     }
 }
 
 fn report(m: &mut Manager, f: impl FnOnce(&mut Manager) -> anyhow::Result<()>) {
     if let Err(e) = f(m) {
-        m.emit_failure(format!("{e:#}"));
+        m.emit(Event::Failed(format!("{e:#}")));
         m.changed();
     }
 }

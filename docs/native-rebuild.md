@@ -1,8 +1,9 @@
 # Plan: native Packmule on GPUI (no Electron)
 
-Status: **phase 1 done** (2026-11-09, branch `native`): the core library in
-`native/` with 37 tests. Phase 2 (the GPUI interface) is next. The Electron
-app was released as v0.1.0 first.
+Status (2026-11-09, branch `native`): **phase 1 done** (the core library in
+`native/`, 37 tests); **phase 2 in progress**: the GPUI interface in
+`native/app` renders every screen on real data and needs click-testing. The
+Electron app was released as v0.1.0 first.
 
 ## Why
 
@@ -147,6 +148,23 @@ ui (GPUI)  --Command-->  worker thread  --Event-->  ui
   pure Rust). A token the Electron app encrypted can't be read; the user
   enters it again. `plain:` tokens are read.
 - Unknown fields in state.json (like the old `curseforgeKey`) are kept.
+
+### Phase 2 notes
+
+- `native/app` pins `gpui-component =0.9.1`, which is built on `gpui-pre
+  =0.3.12` (a published snapshot of Zed's GPUI) and `gpui-pre-platform` for
+  the Linux backend (wgpu on Vulkan, Wayland and X11). Upgrade all three
+  together.
+- The interface talks to the core's worker over an async channel. The worker
+  sends `CommandDone` after each command so buttons re-enable.
+- Measured on the release build: idle CPU is zero; private memory is about
+  60 MB (the 240 MB RSS is mostly shared GPU driver libraries); the stripped
+  binary is 43 MB, bigger than the 10 MB guessed above, from gpui-component's
+  bundled assets and features.
+- Debug builds open on a given page with `PACKMULE_DEBUG_PAGE=browse|settings|log`,
+  for screenshots (there is no input automation on KDE Wayland here).
+- Test against a copy of the config: `XDG_CONFIG_HOME=<dir>` with
+  `<dir>/packmule/state.json`.
 
 ## Repository layout during the rebuild
 

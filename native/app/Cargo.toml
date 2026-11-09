@@ -1,0 +1,21 @@
+[package]
+name = "packmule-app"
+version = "0.2.0"
+edition = "2024"
+description = "World of Warcraft addon manager that installs and updates addons from their GitHub releases"
+license = "MIT"
+repository = "https://github.com/hammackj/packmule"
+publish = false
+
+[[bin]]
+name = "packmule"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0.104"
+async-channel = "2.5.0"
+chrono = { version = "0.4.45", default-features = false, features = ["clock", "std"] }
+gpui = { version = "=0.3.12", package = "gpui-pre" }
+gpui-component = "=0.9.1"
+gpui_platform = { version = "=0.3.12", package = "gpui-pre-platform", features = ["font-kit", "x11", "wayland"] }
+packmule = { path = ".." }
