@@ -4597,7 +4597,7 @@ dependencies = [
 
 [[package]]
 name = "packmule"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "anyhow",
  "chrono",
@@ -4616,7 +4616,7 @@ dependencies = [
 
 [[package]]
 name = "packmule-app"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "anyhow",
  "async-channel",
