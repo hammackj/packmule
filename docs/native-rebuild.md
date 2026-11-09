@@ -1,7 +1,8 @@
 # Plan: native Packmule on GPUI (no Electron)
 
-Status: proposal, not started. Written 2026-11-09 against the Electron app on
-branch `packmule` (74e8bc4).
+Status: **phase 1 done** (2026-11-09, branch `native`): the core library in
+`native/` with 37 tests. Phase 2 (the GPUI interface) is next. The Electron
+app was released as v0.1.0 first.
 
 ## Why
 
@@ -130,6 +131,22 @@ ui (GPUI)  --Command-->  worker thread  --Event-->  ui
 - [ ] Update checks on launch and every N hours; auto-update; ETags
 - [ ] GitHub token stored in the keyring; existing state.json read as-is
 - [ ] Packmule update banner; single instance; opens links and the AddOns folder
+
+### Phase 1 notes
+
+- `cargo test` in `native/` runs everything offline: a fake GitHub
+  (`testutil::FakeHttp`) serves releases, release.json files and zips,
+  including range requests. `manager_tests.rs` is the fake-WoW-folder
+  scenario (adoption, updates, streams, catalog, repair, removal, restart).
+- `cargo run --example cli -- --config <dir> status|check|update --yes` runs the
+  core against a real state.json and WoW folder. Point `--config` at a copy.
+  Against the real `_forever_` install it matches the Electron app exactly.
+- Found by the live run: GitHub answers a cached request with a 304 that
+  claims gzip with no body; reading it failed. Bodies of 204/304 are skipped.
+- The GitHub token moves to the system keyring (Secret Service via `keyring`,
+  pure Rust). A token the Electron app encrypted can't be read; the user
+  enters it again. `plain:` tokens are read.
+- Unknown fields in state.json (like the old `curseforgeKey`) are kept.
 
 ## Repository layout during the rebuild
 
