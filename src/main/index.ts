@@ -71,7 +71,7 @@ function registerIpc(): void {
     return result.canceled ? null : result.filePaths[0]
   })
   ipcMain.handle('shell:openExternal', (_e, url: string) => {
-    if (/^https:\/\/(github\.com|www\.curseforge\.com)\//.test(url)) return shell.openExternal(url)
+    if (/^https:\/\/github\.com\//.test(url)) return shell.openExternal(url)
   })
   ipcMain.handle('shell:openAddons', async () => {
     const p = manager.currentAddonsPath

@@ -2,7 +2,7 @@
   "name": "packmule",
   "productName": "Packmule",
   "version": "0.1.0",
-  "description": "Install and update World of Warcraft addons from GitHub releases and CurseForge",
+  "description": "Install and update World of Warcraft addons from GitHub releases",
   "author": {
     "name": "hammackj",
     "email": "hammackj@users.noreply.github.com"

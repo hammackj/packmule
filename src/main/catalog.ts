@@ -70,7 +70,7 @@ function recordStream(r: AddonRecord): string | undefined {
 
 /** Whether a managed addon is this catalog entry (same repo and release stream). */
 export function matchesEntry(r: AddonRecord, e: CatalogEntry): boolean {
-  if ((r.source ?? 'github') !== 'github' || r.repo.toLowerCase() !== e.repo.toLowerCase()) return false
+  if (r.repo.toLowerCase() !== e.repo.toLowerCase()) return false
   const stream = recordStream(r)
   return stream === undefined || stream === (e.tagPrefix ?? '')
 }

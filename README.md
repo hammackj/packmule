@@ -1,8 +1,7 @@
 # Packmule
 
 An addon manager for World of Warcraft that installs and updates addons
-straight from their **GitHub releases** (and from CurseForge, with your own API
-key). Linux desktop app.
+straight from their **GitHub releases**. Linux desktop app.
 
 - **Browse:** a catalog of addons that publish packaged GitHub releases,
   grouped by category like the in-game AddOns list. It only offers addons with a
@@ -43,8 +42,6 @@ Packmule shows a banner when a newer version of itself is released.
   unchanged repositories cost no GitHub rate limit. Updates can install
   automatically. A GitHub token in Settings raises the limit if you manage many
   addons.
-- **CurseForge:** paste a `curseforge.com/wow/addons/<name>` link. This needs a
-  CurseForge API key with access to World of Warcraft (Settings).
 - **Data:** `~/.config/packmule/state.json`. Tokens are encrypted with the
   system keyring when one is available.
 

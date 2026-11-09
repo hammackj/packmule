@@ -7,8 +7,6 @@ export interface Settings {
   activeInstall: string
   /** Optional GitHub token to raise the API rate limit (60/hr unauthenticated) */
   githubToken: string
-  /** CurseForge API key (from console.curseforge.com); required for CurseForge addons */
-  curseforgeApiKey: string
   /** Hours between automatic update checks; 0 disables the timer */
   checkIntervalHours: number
   /** Install updates automatically after a check finds them */
@@ -24,28 +22,19 @@ export interface GameInstall {
   interface: number
 }
 
-export type AddonSource = 'github' | 'curseforge'
-
 export interface AddonRecord {
-  /**
-   * Unique key for the addon within a client: "owner/repo" for GitHub,
-   * the project slug (e.g. "dungeonjournal") for CurseForge.
-   */
+  /** GitHub "owner/repo" */
   repo: string
-  /** Where the addon comes from; records saved before this field existed are GitHub */
-  source?: AddonSource
   /**
    * GitHub only: follow releases whose tag has this prefix (e.g. "spoken/";
    * "" = tags without one), for repos that publish several products. Unset
    * means GitHub's /releases/latest.
    */
   tagPrefix?: string
-  /** CurseForge project id */
-  modId?: number
   /** Display name, when the source provides one */
   name?: string
   installedTag: string | null
-  /** GitHub asset id or CurseForge file id */
+  /** GitHub release asset id */
   installedAssetId: number | null
   latestAssetId?: number | null
   /** Top-level AddOns folders this addon owns */
@@ -125,7 +114,6 @@ export interface AppUpdate {
 export interface AppState {
   settings: Settings
   hasToken: boolean
-  hasCurseForgeKey: boolean
   installs: GameInstall[]
   activeInstall: GameInstall | null
   addons: AddonView[]

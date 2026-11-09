@@ -19,7 +19,6 @@ function errorText(e: unknown): string {
 }
 
 function addonPage(a: AddonView): string {
-  if (a.source === 'curseforge') return `https://www.curseforge.com/wow/addons/${a.repo}`
   return a.tagPrefix ? `https://github.com/${a.repo}/releases` : `https://github.com/${a.repo}`
 }
 
@@ -144,7 +143,7 @@ export default function App(): React.JSX.Element {
       <>
       <form className="addbar" onSubmit={(e) => void add(e)}>
         <input
-          placeholder="https://github.com/owner/repo or https://www.curseforge.com/wow/addons/name"
+          placeholder="https://github.com/owner/repo"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           disabled={adding || !state.activeInstall}
@@ -161,8 +160,8 @@ export default function App(): React.JSX.Element {
             <button className="link" onClick={() => setTab('browse')}>
               Browse
             </button>{' '}
-            tab, or paste a GitHub repository URL (it must publish packaged releases with a .zip asset)
-            or a CurseForge addon URL (needs an API key in Settings).
+            tab, or paste a GitHub repository URL (it must publish packaged releases with a .zip
+            asset).
           </div>
         ) : (
           <table>
@@ -324,9 +323,7 @@ function AddonRow(props: {
         <button className="link repo" onClick={() => void window.api.openExternal(addonPage(a))}>
           {addonLabel(a)}
         </button>
-        <span className={`source ${a.source ?? 'github'}`}>
-          {a.source === 'curseforge' ? 'CurseForge' : 'GitHub'}
-        </span>
+        <span className="source">GitHub</span>
         {a.folders.length > 0 && <div className="muted small">{a.folders.join(', ')}</div>}
       </td>
       <td>{a.installedTag ?? '—'}</td>

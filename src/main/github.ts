@@ -46,7 +46,7 @@ export function parseRepo(input: string): { repo: string; tagPrefix?: string } {
   const match =
     trimmed.match(/^(?:https?:\/\/)?(?:www\.)?github\.com\/([\w.-]+)\/([\w.-]+)(?:\/releases\/tag\/(.+))?/i) ??
     trimmed.match(/^([\w.-]+)\/([\w.-]+)$/)
-  if (!match) throw new Error(`Not a GitHub repository or CurseForge addon URL: ${input}`)
+  if (!match) throw new Error(`Not a GitHub repository URL: ${input}`)
   const repo = `${match[1]}/${match[2]}`
   if (!match[3]) return { repo }
   return { repo, tagPrefix: tagStream(decodeURIComponent(match[3].split(/[?#]/)[0])) }

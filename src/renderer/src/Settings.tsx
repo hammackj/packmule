@@ -12,8 +12,6 @@ export default function Settings(props: {
   const [autoUpdate, setAutoUpdate] = useState(state.settings.autoUpdate)
   const [token, setToken] = useState('')
   const [clearToken, setClearToken] = useState(false)
-  const [cfKey, setCfKey] = useState('')
-  const [clearCfKey, setClearCfKey] = useState(false)
 
   async function browse(): Promise<void> {
     const picked = await window.api.pickFolder()
@@ -29,8 +27,6 @@ export default function Settings(props: {
     }
     if (clearToken) update.githubToken = ''
     else if (token.trim()) update.githubToken = token.trim()
-    if (clearCfKey) update.curseforgeApiKey = ''
-    else if (cfKey.trim()) update.curseforgeApiKey = cfKey.trim()
     void onSave(update)
   }
 
@@ -86,23 +82,6 @@ export default function Settings(props: {
             <span className="checkbox small">
               <input type="checkbox" checked={clearToken} onChange={(e) => setClearToken(e.target.checked)} />
               Remove saved token
-            </span>
-          )}
-        </label>
-
-        <label>
-          CurseForge API key (for CurseForge addons)
-          <input
-            type="password"
-            value={cfKey}
-            disabled={clearCfKey}
-            onChange={(e) => setCfKey(e.target.value)}
-            placeholder={state.hasCurseForgeKey ? '•••••••• saved — type to replace' : 'Get one free at console.curseforge.com'}
-          />
-          {state.hasCurseForgeKey && (
-            <span className="checkbox small">
-              <input type="checkbox" checked={clearCfKey} onChange={(e) => setClearCfKey(e.target.checked)} />
-              Remove saved key
             </span>
           )}
         </label>

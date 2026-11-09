@@ -3,13 +3,12 @@ import path from 'node:path'
 import { app, safeStorage } from 'electron'
 import type { AddonRecord, Settings } from '../shared/types'
 
-type SecretSettings = 'githubToken' | 'curseforgeApiKey'
+type SecretSettings = 'githubToken'
 
 interface StoredData {
   settings: Omit<Settings, SecretSettings>
-  /** Secrets are encrypted with safeStorage when available, else prefixed "plain:" */
+  /** Encrypted with safeStorage when available, else prefixed "plain:" */
   token: string
-  curseforgeKey: string
   /** Managed addons per game client folder ("_retail_", "_classic_beta_", ...) */
   addons: Record<string, AddonRecord[]>
 }
@@ -22,7 +21,6 @@ const DEFAULTS: StoredData = {
     autoUpdate: false
   },
   token: '',
-  curseforgeKey: '',
   addons: {}
 }
 
@@ -36,7 +34,6 @@ export class Store {
       this.data = {
         settings: { ...DEFAULTS.settings, ...raw.settings },
         token: raw.token ?? '',
-        curseforgeKey: raw.curseforgeKey ?? '',
         addons: raw.addons ?? {}
       }
     } catch {
@@ -56,19 +53,14 @@ export class Store {
   }
 
   async setSettings(update: Partial<Settings>): Promise<void> {
-    const { githubToken, curseforgeApiKey, ...rest } = update
+    const { githubToken, ...rest } = update
     this.data.settings = { ...this.data.settings, ...rest }
     if (githubToken !== undefined) this.data.token = this.encrypt(githubToken.trim())
-    if (curseforgeApiKey !== undefined) this.data.curseforgeKey = this.encrypt(curseforgeApiKey.trim())
     await this.save()
   }
 
   get token(): string {
     return this.decrypt(this.data.token)
-  }
-
-  get curseforgeKey(): string {
-    return this.decrypt(this.data.curseforgeKey)
   }
 
   private decrypt(t: string): string {

@@ -85,8 +85,8 @@ export default function Browse(props: {
         )}
 
         <p className="muted small">
-          Only addons that publish packaged releases on GitHub are listed. Anything else can still be added by
-          pasting its GitHub or CurseForge link on the Installed tab.
+          Only addons that publish packaged releases on GitHub are listed. Any other addon with packaged GitHub
+          releases can be added by pasting its link on the Installed tab.
         </p>
       </section>
     </div>

@@ -12,7 +12,6 @@ import {
   type Settings
 } from '../shared/types'
 import { catalogEntries, catalogEntry, matchesEntry, productFlavor, refreshCatalog } from './catalog'
-import { CurseForgeClient, parseCurseForgeUrl } from './curseforge'
 import { addonsDir, detectInstalls } from './game'
 import { GitHubClient, parseRepo, type ReleaseAsset } from './github'
 import { installAsset, listAddonFolders, removeFolders, verifyFolders } from './installer'
@@ -25,7 +24,6 @@ const APP_REPO = 'hammackj/packmule'
 export class Manager extends EventEmitter {
   private store = new Store()
   private github = new GitHubClient(() => this.store.token)
-  private curseforge = new CurseForgeClient(() => this.store.curseforgeKey)
   private installs: GameInstall[] = []
   private pathError: string | null = null
   private busy = new Set<string>()
@@ -137,12 +135,7 @@ export class Manager extends EventEmitter {
       let status: AddonView['status'] = 'unknown'
       if (!r.installedTag) status = 'not-installed'
       else if (!(await verifyFolders(this.addonsPath, r.folders))) status = 'missing-files'
-      else if (r.source === 'curseforge') {
-        // Display names can repeat across uploads; file ids can't.
-        if (r.latestAssetId != null) {
-          status = r.latestAssetId !== r.installedAssetId ? 'update-available' : 'up-to-date'
-        }
-      } else if (r.latestTag && r.latestTag !== r.installedTag) status = 'update-available'
+      else if (r.latestTag && r.latestTag !== r.installedTag) status = 'update-available'
       else if (r.latestTag) status = 'up-to-date'
       const toc = r.folders[0] && install ? await readTocInfo(path.join(this.addonsPath, r.folders[0]), install.product) : null
       const fromCatalog = catalogEntries().find((e) => matchesEntry(r, e))
@@ -176,9 +169,8 @@ export class Manager extends EventEmitter {
 
     const { settings } = this.store
     return {
-      settings: { ...settings, githubToken: '', curseforgeApiKey: '' } satisfies Settings,
+      settings: { ...settings, githubToken: '' } satisfies Settings,
       hasToken: this.store.token !== '',
-      hasCurseForgeKey: this.store.curseforgeKey !== '',
       installs: this.installs,
       activeInstall: install,
       addons,
@@ -210,20 +202,9 @@ export class Manager extends EventEmitter {
 
   /** Finds the newest build of a record for this client and records it as latest. */
   private async resolveLatest(r: AddonRecord, install: GameInstall): Promise<{ asset: ReleaseAsset }> {
-    let tag: string
-    let choice: { asset: ReleaseAsset; compatWarning: string | null }
-    if (r.source === 'curseforge') {
-      const mod = r.modId ? await this.curseforge.mod(r.modId) : await this.curseforge.modBySlug(r.repo)
-      r.modId = mod.id
-      r.name = mod.name
-      const file = await this.curseforge.chooseFile(mod, install.version)
-      tag = file.tag
-      choice = file
-    } else {
-      const release = await this.github.latestRelease(r.repo, r.tagPrefix)
-      choice = await this.github.chooseAsset(release, install.interface)
-      tag = release.tag_name
-    }
+    const release = await this.github.latestRelease(r.repo, r.tagPrefix)
+    const choice = await this.github.chooseAsset(release, install.interface)
+    const tag = release.tag_name
     r.latestTag = tag
     r.latestAssetId = choice.asset.id
     r.latestAssetName = choice.asset.name
@@ -265,11 +246,10 @@ export class Manager extends EventEmitter {
   addAddon(url: string): Promise<AppState> {
     return this.serial(async () => {
       const install = this.requireInstall()
-      const slug = parseCurseForgeUrl(url)
-      const gh = slug ? null : parseRepo(url)
-      const repo = slug ?? gh!.repo
-      let tagPrefix = gh?.tagPrefix
-      if (gh && tagPrefix === undefined) {
+      const gh = parseRepo(url)
+      const repo = gh.repo
+      let tagPrefix = gh.tagPrefix
+      if (tagPrefix === undefined) {
         // Repos that publish several products (tags like "spoken/v1", "manager/v1")
         // share one /releases/latest, so make the user pick a stream.
         const streams = await this.github.releaseStreams(repo)
@@ -282,7 +262,7 @@ export class Manager extends EventEmitter {
         }
         if (streams.length === 1 && streams[0]) tagPrefix = streams[0]
       }
-      await this.addRecord(install, slug ? 'curseforge' : 'github', repo, tagPrefix)
+      await this.addRecord(install, repo, tagPrefix)
       return this.state()
     })
   }
@@ -295,14 +275,13 @@ export class Manager extends EventEmitter {
       if (!entry) throw new Error(`Unknown catalog addon: ${id}`)
       const existing = this.records.find((r) => matchesEntry(r, entry))
       if (existing) await this.install(existing)
-      else await this.addRecord(install, 'github', entry.repo, entry.tagPrefix, entry.name)
+      else await this.addRecord(install, entry.repo, entry.tagPrefix, entry.name)
       return this.state()
     })
   }
 
   private async addRecord(
     install: GameInstall,
-    source: AddonRecord['source'],
     repo: string,
     tagPrefix: string | undefined,
     name?: string
@@ -313,7 +292,6 @@ export class Manager extends EventEmitter {
     }
     const record: AddonRecord = {
       repo,
-      source,
       ...(tagPrefix !== undefined ? { tagPrefix } : {}),
       ...(name ? { name } : {}),
       installedTag: null,
