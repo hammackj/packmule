@@ -1,6 +1,6 @@
 [package]
 name = "packmule"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 description = "World of Warcraft addon manager that installs and updates addons from their GitHub releases"
 license = "MIT"
