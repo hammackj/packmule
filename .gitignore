@@ -1,5 +1,6 @@
-node_modules/
-out/
+target/
 dist/
 *.log
-native/target/
+# Left over from the Electron app
+node_modules/
+out/

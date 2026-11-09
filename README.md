@@ -1,7 +1,9 @@
 # Packmule
 
 An addon manager for World of Warcraft that installs and updates addons
-straight from their **GitHub releases**. Linux desktop app.
+straight from their **GitHub releases**. A native Linux desktop app written in
+Rust with [GPUI](https://gpui.rs) (Zed's GPU-accelerated interface library):
+one small binary, no browser engine, and no CPU use while idle.
 
 - **Browse:** a catalog of addons that publish packaged GitHub releases,
   grouped by category like the in-game AddOns list. It only offers addons with a
@@ -22,13 +24,20 @@ straight from their **GitHub releases**. Linux desktop app.
 Download the latest build from
 [Releases](https://github.com/hammackj/packmule/releases):
 
-- **Arch / CachyOS / Manjaro:** `sudo pacman -U Packmule-<version>-*.pacman`
-- **Debian / Ubuntu:** `sudo apt install ./Packmule-<version>-*.deb`
-- **Anything else:** the `.AppImage` (needs `libfuse2`)
+- **Arch / CachyOS / Manjaro:** `sudo pacman -U packmule-<version>-1-x86_64.pkg.tar.zst`
+- **Debian / Ubuntu:** `sudo apt install ./packmule_<version>_amd64.deb`
+- **Anything else:** unpack `packmule-<version>-x86_64-linux.tar.gz` and run
+  `./install.sh` (installs to `~/.local`; `./install.sh --uninstall` removes it)
+
+Needs glibc 2.35 or newer and a GPU driver with Vulkan (OpenGL works as a
+fallback). Wayland and X11 are both supported.
 
 Open **Settings**, point Packmule at the folder that contains `_retail_`,
 `_classic_era_`, `_forever_` and so on, then pick the game client at the top.
 Packmule shows a banner when a newer version of itself is released.
+
+Coming from Packmule 0.1 (the Electron version)? Your addons and settings
+carry over; only a saved GitHub token needs entering again.
 
 ## How it works
 
@@ -47,8 +56,8 @@ Packmule shows a banner when a newer version of itself is released.
   unchanged repositories cost no GitHub rate limit. Updates can install
   automatically. A GitHub token in Settings raises the limit if you manage many
   addons.
-- **Data:** `~/.config/packmule/state.json`. Tokens are encrypted with the
-  system keyring when one is available.
+- **Data:** `~/.config/packmule/state.json`. The GitHub token is kept in the
+  system keyring (KWallet, GNOME Keyring) when one is available.
 
 ## The catalog
 
@@ -58,7 +67,7 @@ repository at startup, so additions reach everyone without an app release.
 To add an addon, add an entry and refresh the game versions it supports:
 
 ```sh
-GITHUB_TOKEN=$(gh auth token) npm run catalog
+GITHUB_TOKEN=$(gh auth token) cargo run --example update-catalog
 ```
 
 That reads each addon's latest release and fills in `flavors` (from its
@@ -69,16 +78,30 @@ list versions you've checked.
 ## Development
 
 ```sh
-npm install      # also downloads the Electron binary
-npm run dev      # hot-reloading dev build
-npm run dist     # build the Linux packages into dist/
+cargo run -p packmule-app              # the app
+cargo test -p packmule                 # the core's tests (offline, against a fake GitHub)
+packaging/build-packages.sh            # .tar.gz, .deb and pacman package into dist/
 ```
+
+| Path | What |
+| --- | --- |
+| `src/` | the core: game clients, `.toc` files, GitHub releases, installs, the catalog, state |
+| `app/` | the GPUI interface |
+| `examples/cli.rs` | runs the core from a terminal: `cargo run --example cli -- --config <dir> status` |
+| `packaging/` | package builder, desktop entry, icons |
+
+Building needs the headers for `libxcb`, `libxkbcommon` and `wayland`
+(Debian: `libxcb1-dev libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev`).
+
+To test against a copy of your data: `XDG_CONFIG_HOME=/tmp/pm cargo run -p packmule-app`
+with a `state.json` in `/tmp/pm/packmule/`.
 
 `./packaging/install-launcher.sh` adds a menu entry that runs your working copy,
 rebuilding when the source changes.
 
-Releases: bump `version` in `package.json`, commit, then push a matching tag
-(`v0.2.0`). GitHub Actions builds the packages and publishes the release.
+Releases: bump `version` in `app/Cargo.toml` (and `Cargo.toml`), commit, then
+push a matching tag (`v0.3.0`). GitHub Actions builds the packages and
+publishes the release.
 
 ## License
 

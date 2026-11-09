@@ -10,7 +10,7 @@ use crate::store::AddonRecord;
 /// The catalog shipped with the app is a fallback: the copy in the GitHub repo
 /// is fetched at startup so new addons appear without an app release.
 pub const REMOTE_URL: &str = "https://raw.githubusercontent.com/hammackj/packmule/master/catalog.json";
-const BUNDLED: &str = include_str!("../../catalog.json");
+const BUNDLED: &str = include_str!("../catalog.json");
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

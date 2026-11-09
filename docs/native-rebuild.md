@@ -1,9 +1,10 @@
 # Plan: native Packmule on GPUI (no Electron)
 
-Status (2026-11-09, branch `native`): **phases 1–3 done**: the core library
-in `native/` (37 tests), the GPUI interface in `native/app` (click-tested:
-add, remove, reinstall), and Linux packages built by CI. **Phase 4, the
-switch-over, is next.** The Electron app was released as v0.1.0 first.
+Status: **done** (2026-11-09). The native app replaced the Electron one in
+v0.2.0. Paths below that say `native/` are from before the switch-over, when
+the Rust project lived there; it is now at the repository root (`src/`,
+`app/`, `examples/`, `packaging/`). The Electron app is in git history up to
+v0.1.0.
 
 ## Why
 
@@ -180,6 +181,18 @@ ui (GPUI)  --Command-->  worker thread  --Event-->  ui
   Vulkan loader and EGL loaded on demand. Fonts are parsed in Rust (no
   fontconfig/freetype libraries).
 - Sizes: pacman 13 MB, deb 12 MB, tar.gz 18 MB (Electron: 91–125 MB).
+
+### Phase 4 notes
+
+- The Rust project moved to the root with `git mv` (history kept); the
+  Electron sources and the Node toolchain were removed.
+- `npm run catalog` became `cargo run --example update-catalog`; its first
+  run reproduced `catalog.json` byte for byte.
+- `release.yml` builds on Ubuntu 22.04, checks the tag against
+  `app/Cargo.toml`, runs the core tests and publishes the three packages with
+  `gh release create`.
+- The working-copy launcher (`packaging/packmule-launch.sh`) now builds and
+  runs the native app.
 
 ## Repository layout during the rebuild
 

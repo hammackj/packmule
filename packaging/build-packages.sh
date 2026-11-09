@@ -3,13 +3,13 @@
 #   packaging/build-packages.sh [path/to/packmule] [out-dir]
 # Produces packmule-<ver>-x86_64-linux.tar.gz, packmule_<ver>_amd64.deb (if
 # dpkg-deb exists) and packmule-<ver>-1-x86_64.pkg.tar.zst (if bsdtar and zstd
-# exist). Run from native/.
+# exist).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 bin="${1:-target/release/packmule}"
 out="${2:-dist}"
 version="$(sed -n 's/^version = "\(.*\)"/\1/p' app/Cargo.toml | head -1)"
-repo_root="$(cd .. && pwd)"
+repo_root="$(pwd)"
 [ -x "$bin" ] || { echo "no binary at $bin (cargo build --release -p packmule-app)"; exit 1; }
 mkdir -p "$out"
 out="$(cd "$out" && pwd)"

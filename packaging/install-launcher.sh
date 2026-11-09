@@ -30,7 +30,7 @@ mkdir -p "$ICONS/scalable/apps"
 cp -f "$REPO/packaging/packmule.svg" "$ICONS/scalable/apps/packmule.svg"
 
 # The Exec path is only knowable at install time.
-sed "s|__REPO__|$REPO|g" "$REPO/packaging/packmule.desktop" > "$APPS/packmule.desktop"
+sed "s|__REPO__|$REPO|g" "$REPO/packaging/packmule-dev.desktop" > "$APPS/packmule.desktop"
 chmod +x "$APPS/packmule.desktop"
 
 DESKTOP_DIR="$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")"
