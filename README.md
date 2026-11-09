@@ -34,7 +34,15 @@ fallback). Wayland and X11 are both supported.
 
 Open **Settings**, point Packmule at the folder that contains `_retail_`,
 `_classic_era_`, `_forever_` and so on, then pick the game client at the top.
+### Updating Packmule
+
 Packmule shows a banner when a newer version of itself is released.
+
+- **Installed with `install.sh`:** click **Update** in the banner. Packmule
+  downloads the new build, checks it against the SHA-256 GitHub publishes,
+  replaces itself and restarts.
+- **pacman or apt:** install the new package the same way (Packmule can't
+  write to `/usr/bin`, so the banner links to the release).
 
 Coming from Packmule 0.1 (the Electron version)? Your addons and settings
 carry over; only a saved GitHub token needs entering again.

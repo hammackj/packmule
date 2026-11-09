@@ -36,3 +36,23 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create "$GITHUB_REF_NAME" dist/* --title "Packmule ${GITHUB_REF_NAME#v}" --generate-notes
+
+  # Updates packmule-bin on the AUR. Needs the AUR_SSH_KEY secret: the private
+  # key of an SSH key added to the AUR maintainer account (skipped without it).
+  aur:
+    needs: linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Publish packmule-bin
+        env:
+          AUR_SSH_KEY: ${{ secrets.AUR_SSH_KEY }}
+          AUR_NAME: ${{ github.repository_owner }}
+          AUR_EMAIL: ${{ github.repository_owner }}@users.noreply.github.com
+        run: |
+          if [ -z "$AUR_SSH_KEY" ]; then echo "No AUR_SSH_KEY secret; skipping the AUR"; exit 0; fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$AUR_SSH_KEY" > ~/.ssh/aur && chmod 600 ~/.ssh/aur
+          ssh-keyscan -t ed25519 aur.archlinux.org >> ~/.ssh/known_hosts 2>/dev/null
+          printf 'Host aur.archlinux.org\n  User aur\n  IdentityFile ~/.ssh/aur\n' >> ~/.ssh/config
+          packaging/aur/publish.sh "$GITHUB_REF_NAME" --push
