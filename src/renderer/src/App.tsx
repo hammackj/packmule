@@ -209,8 +209,9 @@ export default function App(): React.JSX.Element {
 
         {state.unmanaged.length > 0 && (
           <p className="muted small">
-            Manual addons were installed outside this app. They're listed so you can see them, but
-            never updated or deleted here.
+            Manual addons were installed outside Packmule and are never changed here. When Packmule
+            recognises one (it's in Browse, or its .toc links a GitHub repo with a build for this
+            client), it takes it over automatically during the next update check.
           </p>
         )}
       </main>

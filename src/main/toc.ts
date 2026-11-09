@@ -7,6 +7,17 @@ export interface TocInfo {
   author: string | null
   /** "## Category" (11.1+ TOCs): the group the in-game AddOns list shows it under */
   category: string | null
+  /** A GitHub "owner/repo" named in the .toc's website fields, if any */
+  githubRepo: string | null
+}
+
+/** .toc fields authors use for their project page. */
+const LINK_FIELDS = ['X-Website', 'X-Github', 'X-GitHub-Repo', 'X-Repository', 'X-Source', 'X-URL', 'URL']
+
+/** "owner/repo" from a github.com link; profile links and other sites give null. */
+export function githubRepoFromUrl(text: string): string | null {
+  const m = text.match(/github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?(?:[/?#]|$)/i)
+  return m ? `${m[1]}/${m[2]}` : null
 }
 
 /** Per-client .toc suffixes, most specific first (e.g. Questie_Forever.toc). */
@@ -27,7 +38,7 @@ function stripEscapes(s: string): string {
  * for this client's flavor, then the plain <Folder>.toc, then any .toc.
  */
 export async function readTocInfo(addonDir: string, product: string): Promise<TocInfo> {
-  const empty: TocInfo = { title: null, version: null, author: null, category: null }
+  const empty: TocInfo = { title: null, version: null, author: null, category: null, githubRepo: null }
   const files = (await fs.readdir(addonDir).catch(() => [] as string[])).filter((f) =>
     f.toLowerCase().endsWith('.toc')
   )
@@ -44,5 +55,16 @@ export async function readTocInfo(addonDir: string, product: string): Promise<To
     // Unreplaced packager tokens like @project-version@ aren't useful to show.
     return value && !/^@.+@$/.test(value) ? value : null
   }
-  return { title: field('Title'), version: field('Version'), author: field('Author'), category: field('Category') }
+  const githubRepo =
+    LINK_FIELDS.map(field)
+      .filter((v): v is string => v !== null)
+      .map(githubRepoFromUrl)
+      .find((r) => r !== null) ?? null
+  return {
+    title: field('Title'),
+    version: field('Version'),
+    author: field('Author'),
+    category: field('Category'),
+    githubRepo
+  }
 }

@@ -13,11 +13,12 @@ import {
 } from '../shared/types'
 import { catalogEntries, catalogEntry, matchesEntry, productFlavor, refreshCatalog } from './catalog'
 import { addonsDir, detectInstalls } from './game'
-import { GitHubClient, parseRepo, type ReleaseAsset } from './github'
+import { GitHubClient, parseRepo, tagStream, type ReleaseAsset } from './github'
 import { installAsset, listAddonFolders, removeFolders, verifyFolders } from './installer'
 import { Store } from './store'
 import { readTocInfo } from './toc'
 import { newerVersion } from './version'
+import { addonFoldersIn, remoteZipEntries } from './zipindex'
 
 const APP_REPO = 'hammackj/packmule'
 
@@ -33,6 +34,8 @@ export class Manager extends EventEmitter {
   /** Serializes filesystem-changing work so installs never interleave */
   private queue: Promise<unknown> = Promise.resolve()
   private appUpdate: AppUpdate | null = null
+  /** "folder>owner/repo" pairs from .toc links already checked this session */
+  private linkChecked = new Set<string>()
 
   /** appVersion: this build's version, compared against Packmule's GitHub releases */
   constructor(private appVersion: string) {
@@ -348,6 +351,93 @@ export class Manager extends EventEmitter {
     })
   }
 
+  /**
+   * Finds addons installed by hand that Packmule can manage and adds them:
+   * first by the catalog's folder lists, then by a GitHub link in the .toc
+   * (only when that repo's latest release really contains the folder).
+   */
+  private async adoptManual(install: GameInstall): Promise<void> {
+    const owned = new Set(this.records.flatMap((r) => r.folders))
+    const present = new Set(
+      (await listAddonFolders(this.addonsPath)).filter((f) => !owned.has(f) && !f.startsWith('.'))
+    )
+    if (present.size === 0) return
+    const flavor = productFlavor(install.product)
+
+    for (const e of catalogEntries()) {
+      if (!flavor || !e.flavors.includes(flavor) || !e.folders?.length) continue
+      if (!present.has(e.folders[0]) || this.records.some((r) => matchesEntry(r, e))) continue
+      const folders = e.folders.filter((f) => present.has(f))
+      if (await this.adopt(install, e.repo, e.tagPrefix, folders, e.name)) folders.forEach((f) => present.delete(f))
+    }
+
+    for (const folder of [...present]) {
+      if (!present.has(folder)) continue // taken by an earlier adoption
+      const toc = await readTocInfo(path.join(this.addonsPath, folder), install.product)
+      const repo = toc.githubRepo
+      const key = `${folder}>${repo}`
+      if (!repo || this.linkChecked.has(key)) continue
+      this.linkChecked.add(key)
+      if (this.records.some((r) => r.repo.toLowerCase() === repo.toLowerCase())) continue
+      try {
+        const release = await this.github.latestRelease(repo)
+        const { asset, interfaceMatch } = await this.github.chooseAsset(release, install.interface)
+        // A release that lists its builds but none for this client would "update" it to the wrong game version.
+        if (interfaceMatch === false) continue
+        const inZip = addonFoldersIn(await remoteZipEntries(asset.browser_download_url, asset.size))
+        if (!inZip.includes(folder)) continue
+        const folders = inZip.filter((f) => present.has(f))
+        if (await this.adopt(install, repo, undefined, folders)) folders.forEach((f) => present.delete(f))
+      } catch {
+        // No usable release: it stays a manual addon.
+      }
+    }
+  }
+
+  /** Starts managing folders that are already installed; true on success. */
+  private async adopt(
+    install: GameInstall,
+    repo: string,
+    tagPrefix: string | undefined,
+    folders: string[],
+    name?: string
+  ): Promise<boolean> {
+    const record: AddonRecord = {
+      repo,
+      ...(tagPrefix !== undefined ? { tagPrefix } : {}),
+      ...(name ? { name } : {}),
+      installedTag: null,
+      installedAssetId: null,
+      folders,
+      installedAt: null,
+      latestTag: null,
+      latestAssetName: null,
+      lastChecked: null,
+      compatWarning: null,
+      error: null
+    }
+    try {
+      await this.resolveLatest(record, install)
+    } catch (e) {
+      this.log('error', `Found ${name ?? repo} in AddOns but couldn't check its releases: ${(e as Error).message}`)
+      return false
+    }
+    // Up to date if the installed .toc version is the latest release's version.
+    const toc = await readTocInfo(path.join(this.addonsPath, folders[0]), install.product)
+    const bare = (v: string): string => v.slice(tagStream(v).length).replace(/^v/i, '').split('+')[0].trim().toLowerCase()
+    const current = toc.version !== null && record.latestTag !== null && bare(toc.version) === bare(record.latestTag)
+    record.installedTag = current ? record.latestTag : toc.version ? `${toc.version} (by hand)` : 'installed by hand'
+    record.installedAssetId = current ? (record.latestAssetId ?? null) : null
+    this.records.push(record)
+    await this.persist()
+    this.log(
+      'info',
+      `Now managing ${name ?? repo} (${folders.join(', ')}), found installed by hand` +
+        (current ? '; up to date' : `; ${record.latestTag} is available`)
+    )
+    return true
+  }
+
   async checkUpdates(): Promise<AppState> {
     if (this.checking) return this.state()
     const install = this.requireInstall()
@@ -355,6 +445,7 @@ export class Manager extends EventEmitter {
     await this.changed()
     await this.serial(async () => {
       try {
+        await this.adoptManual(install)
         for (const r of this.records) {
           try {
             await this.resolveLatest(r, install)

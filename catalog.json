@@ -9,6 +9,9 @@
       "description": "All your bags in one window, plus your bank anywhere, other characters' bags, item counts on tooltips, sell junk, item levels and upgrade arrows.",
       "flavors": [
         "forever"
+      ],
+      "folders": [
+        "Satchel"
       ]
     },
     {
@@ -26,6 +29,9 @@
         "mists",
         "titan",
         "wrath"
+      ],
+      "folders": [
+        "AllTheThings"
       ]
     },
     {
@@ -41,6 +47,10 @@
         "forever",
         "mists",
         "wrath"
+      ],
+      "folders": [
+        "Questie",
+        "QuestieDB"
       ]
     },
     {
@@ -55,6 +65,9 @@
         "classic",
         "mists",
         "wrath"
+      ],
+      "folders": [
+        "Questie"
       ]
     },
     {
@@ -65,6 +78,9 @@
       "description": "Replaces the quest and gossip windows with a cleaner, cinematic dialogue view.",
       "flavors": [
         "forever"
+      ],
+      "folders": [
+        "DialogueUI"
       ]
     },
     {
@@ -76,6 +92,14 @@
       "description": "Voice-over for quest text, books, zones and bosses. This is the core addon; add the audio packs you want.",
       "flavors": [
         "forever"
+      ],
+      "folders": [
+        "Spoken",
+        "Spoken_Bosses",
+        "Spoken_Places",
+        "Spoken_Quests",
+        "Spoken_Readables",
+        "SpokenContributions"
       ]
     },
     {
@@ -90,6 +114,12 @@
       ],
       "requires": [
         "spoken"
+      ],
+      "folders": [
+        "SpokenQuestsAudioHorde",
+        "SpokenQuestsAudioGossip",
+        "SpokenQuestsAudioShared",
+        "SpokenQuestsAudioAlliance"
       ]
     },
     {
@@ -104,6 +134,9 @@
       ],
       "requires": [
         "spoken"
+      ],
+      "folders": [
+        "SpokenPlacesAudio"
       ]
     },
     {
@@ -118,6 +151,9 @@
       ],
       "requires": [
         "spoken"
+      ],
+      "folders": [
+        "SpokenReadablesAudio"
       ]
     },
     {
@@ -132,6 +168,9 @@
       ],
       "requires": [
         "spoken"
+      ],
+      "folders": [
+        "SpokenBossesAudio"
       ]
     },
     {
@@ -149,6 +188,20 @@
         "mists",
         "titan",
         "wrath"
+      ],
+      "folders": [
+        "BigWigs",
+        "BigWigs_Core",
+        "BigWigs_Options",
+        "BigWigs_Plugins",
+        "BigWigs_Sporefall",
+        "BigWigs_TheDreamrift",
+        "BigWigs_TheVoidspire",
+        "BigWigs_MidnightLairs",
+        "BigWigs_MidnightWorld",
+        "BigWigs_MarchOnQuelDanas",
+        "BigWigs_TheVenomousAbyss",
+        "BigWigs_TheUnbindingOfKithix"
       ]
     },
     {
@@ -169,6 +222,21 @@
       ],
       "requires": [
         "bigwigs"
+      ],
+      "folders": [
+        "LittleWigs",
+        "LittleWigs_Legion",
+        "LittleWigs_Classic",
+        "LittleWigs_Forever",
+        "LittleWigs_Cataclysm",
+        "LittleWigs_Shadowlands",
+        "LittleWigs_Dragonflight",
+        "LittleWigs_TheWarWithin",
+        "LittleWigs_BurningCrusade",
+        "LittleWigs_MistsOfPandaria",
+        "LittleWigs_BattleForAzeroth",
+        "LittleWigs_WarlordsOfDraenor",
+        "LittleWigs_WrathOfTheLichKing"
       ]
     },
     {
@@ -186,6 +254,16 @@
         "mists",
         "titan",
         "wrath"
+      ],
+      "folders": [
+        "DBM-GUI",
+        "DBM-Core",
+        "DBM-VPVEM",
+        "DBM-Brawlers",
+        "DBM-Midnight",
+        "DBM-Lairs-Midnight",
+        "DBM-Raids-Midnight",
+        "DBM-StatusBarTimers"
       ]
     },
     {
@@ -201,6 +279,9 @@
         "mainline",
         "mists",
         "titan"
+      ],
+      "folders": [
+        "Plater"
       ]
     },
     {
@@ -213,6 +294,12 @@
         "classic",
         "mainline",
         "mists"
+      ],
+      "folders": [
+        "Kui_Nameplates",
+        "Kui_Nameplates_Core",
+        "Kui_Media",
+        "Kui_Nameplates_Core_Config"
       ]
     },
     {
@@ -227,6 +314,9 @@
         "forever",
         "mainline",
         "mists"
+      ],
+      "folders": [
+        "Bartender4"
       ]
     },
     {
@@ -242,6 +332,14 @@
         "mainline",
         "mists",
         "titan"
+      ],
+      "folders": [
+        "Dominos",
+        "Dominos_Cast",
+        "Dominos_Roll",
+        "Dominos_Config",
+        "Masque_Dominos",
+        "Dominos_Progress"
       ]
     },
     {
@@ -256,6 +354,10 @@
         "mainline",
         "mists",
         "titan"
+      ],
+      "folders": [
+        "OmniCC",
+        "OmniCC_Config"
       ]
     },
     {
@@ -270,6 +372,13 @@
         "classic",
         "mists",
         "titan"
+      ],
+      "folders": [
+        "WeakAuras",
+        "WeakAurasArchive",
+        "WeakAurasOptions",
+        "WeakAurasTemplates",
+        "WeakAurasModelPaths"
       ]
     },
     {
@@ -281,6 +390,9 @@
       "flavors": [
         "forever",
         "mainline"
+      ],
+      "folders": [
+        "Mapster"
       ]
     },
     {
@@ -297,6 +409,9 @@
         "mainline",
         "mists",
         "wrath"
+      ],
+      "folders": [
+        "AdvancedInterfaceOptions"
       ]
     }
   ]

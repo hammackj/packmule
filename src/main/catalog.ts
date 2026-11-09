@@ -18,7 +18,8 @@ function valid(e: unknown): e is CatalogEntry {
     (x.tagPrefix === undefined || typeof x.tagPrefix === 'string') &&
     typeof x.category === 'string' &&
     typeof x.description === 'string' &&
-    Array.isArray(x.flavors)
+    Array.isArray(x.flavors) &&
+    (x.folders === undefined || (Array.isArray(x.folders) && x.folders.every((f) => typeof f === 'string')))
   )
 }
 

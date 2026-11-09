@@ -9,6 +9,11 @@ straight from their **GitHub releases**. Linux desktop app.
 - **Installed:** everything in your AddOns folder, grouped by category, with
   one-click updates. Addons you installed by hand are listed too, but never
   touched.
+- **Picks up hand-installed addons:** each update check scans AddOns for
+  addons you installed yourself. Ones it recognises (from the catalog's folder
+  lists, or a GitHub link in their `.toc` whose latest release contains that
+  folder and has a build for your client) become managed: up to date if the
+  `.toc` version matches the latest release, otherwise ready to update.
 - **Any GitHub addon:** paste a repository link to add one that isn't in the
   catalog. It needs releases with a packaged `.zip`.
 
@@ -56,7 +61,8 @@ To add an addon, add an entry and refresh the game versions it supports:
 GITHUB_TOKEN=$(gh auth token) npm run catalog
 ```
 
-That reads each addon's latest `release.json` and fills in `flavors`. Addons
+That reads each addon's latest release and fills in `flavors` (from its
+`release.json`) and `folders` (from the zip's file index). Addons
 whose releases have no `release.json` keep the flavors written by hand, so only
 list versions you've checked.
 

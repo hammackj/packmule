@@ -23,7 +23,7 @@
     "typecheck": "tsc --noEmit",
     "postinstall": "install-electron",
     "dist": "electron-vite build && electron-builder --linux",
-    "catalog": "node scripts/update-catalog.mjs"
+    "catalog": "node scripts/update-catalog.mts"
   },
   "build": {
     "appId": "io.github.hammackj.packmule",

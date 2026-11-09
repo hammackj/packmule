@@ -34,6 +34,8 @@ interface PackagerManifest {
 export interface AssetChoice {
   asset: ReleaseAsset
   compatWarning: string | null
+  /** true/false when the release's release.json lists (or doesn't list) the interface; null without one */
+  interfaceMatch: boolean | null
 }
 
 /**
@@ -144,7 +146,8 @@ export class GitHubClient {
         const listed = [...new Set(chosen.metadata.map((m) => `${m.flavor} ${m.interface}`))].join(', ')
         return {
           asset,
-          compatWarning: match ? null : `No build lists interface ${gameInterface} (has: ${listed})`
+          compatWarning: match ? null : `No build lists interface ${gameInterface} (has: ${listed})`,
+          interfaceMatch: match !== undefined
         }
       }
     }
@@ -154,7 +157,8 @@ export class GitHubClient {
     return {
       asset: pool[0],
       compatWarning:
-        pool.length > 1 ? `No release.json; picked ${pool[0].name} of ${pool.length} zips` : null
+        pool.length > 1 ? `No release.json; picked ${pool[0].name} of ${pool.length} zips` : null,
+      interfaceMatch: null
     }
   }
 }

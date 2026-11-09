@@ -94,6 +94,11 @@ export interface CatalogEntry {
    * packager's release.json ("forever", "mainline", "classic", "mists", ...).
    */
   flavors: string[]
+  /**
+   * Addon folders the release installs, primary first. Used to recognise the
+   * addon when it was installed by hand.
+   */
+  folders?: string[]
   /** Other catalog ids this addon needs */
   requires?: string[]
 }
