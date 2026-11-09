@@ -401,7 +401,12 @@
           "date": "2026-11-09",
           "claude": "pass",
           "codex": "unsure",
-          "report": "reviews/bigwigs/v427.9.md"
+          "report": "reviews/bigwigs/v427.9.md",
+          "signoff": {
+            "by": "hammackj",
+            "date": "2026-11-09",
+            "note": "Codex found nothing malicious but didn't finish reading every file of this large addon; Claude passed it."
+          }
         }
       ]
     },
@@ -495,7 +500,12 @@
           "date": "2026-11-09",
           "claude": "pass",
           "codex": "unsure",
-          "report": "reviews/dbm/12.1.20.md"
+          "report": "reviews/dbm/12.1.20.md",
+          "signoff": {
+            "by": "hammackj",
+            "date": "2026-11-09",
+            "note": "Codex found nothing malicious but didn't finish reading every file of this large addon; Claude passed it."
+          }
         }
       ]
     },
@@ -529,7 +539,12 @@
           "date": "2026-11-09",
           "claude": "pass",
           "codex": "unsure",
-          "report": "reviews/plater/Plater-v663.md"
+          "report": "reviews/plater/Plater-v663.md",
+          "signoff": {
+            "by": "hammackj",
+            "date": "2026-11-09",
+            "note": "Codex found nothing malicious but didn't finish reading every file of this large addon; Claude passed it. Plater runs scripts players import, which a review of the addon itself can't cover."
+          }
         }
       ]
     },
@@ -710,7 +725,12 @@
           "date": "2026-11-09",
           "claude": "pass",
           "codex": "unsure",
-          "report": "reviews/weakauras/5.22.1.md"
+          "report": "reviews/weakauras/5.22.1.md",
+          "signoff": {
+            "by": "hammackj",
+            "date": "2026-11-09",
+            "note": "Codex found nothing malicious but didn't finish reading every file of this large addon; Claude passed it."
+          }
         }
       ]
     },
