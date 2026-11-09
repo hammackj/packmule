@@ -204,6 +204,10 @@ impl PackmuleView {
                 e.entry.requires.iter().map(|r| names.get(r.as_str()).copied().unwrap_or(r)).collect();
             card = card.child(muted(format!("Needs {}", needs.join(", "))));
         }
-        card.child(h_flex().gap_2().child(div().flex_1().child(muted(e.entry.repo.clone()))).child(action))
+        let mut trust = h_flex().gap_1().flex_wrap().child(review_badge(format!("review-{id}"), &e.review));
+        if let Some(v) = &e.entry.verified {
+            trust = trust.child(verified_badge(format!("verified-{id}"), v));
+        }
+        card.child(trust).child(h_flex().gap_2().child(div().flex_1().child(muted(e.entry.repo.clone()))).child(action))
     }
 }

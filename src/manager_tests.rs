@@ -76,6 +76,8 @@ fn entry(id: &str, repo: &str, prefix: Option<&str>, folders: &[&str], flavors: 
         flavors: flavors.iter().map(|s| s.to_string()).collect(),
         folders: folders.iter().map(|s| s.to_string()).collect(),
         requires: Vec::new(),
+        verified: None,
+        reviews: Vec::new(),
     }
 }
 
@@ -317,4 +319,53 @@ fn worker_runs_commands_in_order_and_reports_failures() {
     assert!(failures[0].contains("Not a GitHub repository URL"));
     assert_eq!(status_of(&last_state.unwrap(), "fake/a"), Some(AddonStatus::UpToDate));
     drop(worker);
+}
+
+#[test]
+fn review_badges_follow_the_exact_build() {
+    use crate::catalog::{Review, ReviewStatus, Verified};
+    let e = env();
+    let v1 = zip_of(&[("Foo", "## Version: v1\n")]);
+    let v2 = zip_of(&[("Foo", "## Version: v2\n")]);
+    let sha = |b: &[u8]| -> String {
+        use sha2::{Digest, Sha256};
+        Sha256::digest(b).iter().map(|x| format!("{x:02x}")).collect()
+    };
+    e.http.releases(&[FakeRelease {
+        repo: "fake/foo",
+        tag: "v1",
+        zips: vec![("foo.zip", v1.clone())],
+        manifest: None,
+    }]);
+    let mut foo = entry("foo", "fake/foo", None, &["Foo"], &["forever"]);
+    foo.verified = Some(Verified { date: "2026-11-09".into(), ci_builds: true, note: String::new() });
+    let review = Review {
+        tag: "v1".into(),
+        sha256: vec![sha(&v1)],
+        date: "2026-11-09".into(),
+        claude: "pass".into(),
+        codex: "pass".into(),
+        report: "reviews/foo/v1.md".into(),
+    };
+    foo.reviews = vec![review.clone()];
+    let mut m = e.manager(vec![foo.clone()]);
+    m.install_catalog("foo").unwrap();
+    let s = m.state();
+    let a = &s.addons[0];
+    assert!(a.verified);
+    assert_eq!(a.installed_review, Some(ReviewStatus::Reviewed(review.clone())));
+    assert_eq!(s.catalog[0].review, ReviewStatus::Reviewed(review.clone()));
+
+    // Installs from before hashes were recorded get theirs on the next check.
+    m.records_mut().iter_mut().for_each(|r| r.installed_sha256 = None);
+    m.check_updates().unwrap();
+    assert_eq!(m.state().addons[0].installed_review, Some(ReviewStatus::Reviewed(review.clone())));
+
+    // v2 is released but not reviewed: the update shows as not reviewed yet.
+    e.http.releases(&[FakeRelease { repo: "fake/foo", tag: "v2", zips: vec![("foo.zip", v2)], manifest: None }]);
+    m.check_updates().unwrap();
+    let a = m.state().addons[0].clone();
+    assert_eq!(a.status, AddonStatus::UpdateAvailable);
+    assert_eq!(a.installed_review, Some(ReviewStatus::Reviewed(review.clone())));
+    assert_eq!(a.latest_review, Some(ReviewStatus::NotReviewed(Some(review))));
 }

@@ -12,6 +12,22 @@
       ],
       "folders": [
         "Satchel"
+      ],
+      "verified": {
+        "date": "2026-11-09",
+        "ciBuilds": true
+      },
+      "reviews": [
+        {
+          "tag": "v0.2.0",
+          "sha256": [
+            "aa27d9b3e046ef04abf6e0b1896d3c821a91be0daa83c57c35772c34ea40277e"
+          ],
+          "date": "2026-11-09",
+          "claude": "pass",
+          "codex": "pass",
+          "report": "reviews/satchel/v0.2.0.md"
+        }
       ]
     },
     {
@@ -32,7 +48,11 @@
       ],
       "folders": [
         "AllTheThings"
-      ]
+      ],
+      "verified": {
+        "date": "2026-11-09",
+        "ciBuilds": true
+      }
     },
     {
       "id": "questie",
@@ -51,7 +71,11 @@
       "folders": [
         "Questie",
         "QuestieDB"
-      ]
+      ],
+      "verified": {
+        "date": "2026-11-09",
+        "ciBuilds": true
+      }
     },
     {
       "id": "questie-classic",
@@ -68,7 +92,11 @@
       ],
       "folders": [
         "Questie"
-      ]
+      ],
+      "verified": {
+        "date": "2026-11-09",
+        "ciBuilds": true
+      }
     },
     {
       "id": "dialogueui",
@@ -81,7 +109,11 @@
       ],
       "folders": [
         "DialogueUI"
-      ]
+      ],
+      "verified": {
+        "date": "2026-11-09",
+        "ciBuilds": false
+      }
     },
     {
       "id": "spoken",
@@ -100,7 +132,11 @@
         "Spoken_Quests",
         "Spoken_Readables",
         "SpokenContributions"
-      ]
+      ],
+      "verified": {
+        "date": "2026-11-09",
+        "ciBuilds": true
+      }
     },
     {
       "id": "spoken-quests",
@@ -120,7 +156,11 @@
         "SpokenQuestsAudioGossip",
         "SpokenQuestsAudioShared",
         "SpokenQuestsAudioAlliance"
-      ]
+      ],
+      "verified": {
+        "date": "2026-11-09",
+        "ciBuilds": false
+      }
     },
     {
       "id": "spoken-places",
@@ -137,7 +177,11 @@
       ],
       "folders": [
         "SpokenPlacesAudio"
-      ]
+      ],
+      "verified": {
+        "date": "2026-11-09",
+        "ciBuilds": false
+      }
     },
     {
       "id": "spoken-readables",
@@ -154,7 +198,11 @@
       ],
       "folders": [
         "SpokenReadablesAudio"
-      ]
+      ],
+      "verified": {
+        "date": "2026-11-09",
+        "ciBuilds": false
+      }
     },
     {
       "id": "spoken-bosses",
@@ -171,7 +219,11 @@
       ],
       "folders": [
         "SpokenBossesAudio"
-      ]
+      ],
+      "verified": {
+        "date": "2026-11-09",
+        "ciBuilds": false
+      }
     },
     {
       "id": "bigwigs",
@@ -202,7 +254,11 @@
         "BigWigs_MarchOnQuelDanas",
         "BigWigs_TheVenomousAbyss",
         "BigWigs_TheUnbindingOfKithix"
-      ]
+      ],
+      "verified": {
+        "date": "2026-11-09",
+        "ciBuilds": true
+      }
     },
     {
       "id": "littlewigs",
@@ -237,7 +293,11 @@
         "LittleWigs_BattleForAzeroth",
         "LittleWigs_WarlordsOfDraenor",
         "LittleWigs_WrathOfTheLichKing"
-      ]
+      ],
+      "verified": {
+        "date": "2026-11-09",
+        "ciBuilds": true
+      }
     },
     {
       "id": "dbm",
@@ -264,7 +324,11 @@
         "DBM-Lairs-Midnight",
         "DBM-Raids-Midnight",
         "DBM-StatusBarTimers"
-      ]
+      ],
+      "verified": {
+        "date": "2026-11-09",
+        "ciBuilds": true
+      }
     },
     {
       "id": "plater",
@@ -282,7 +346,11 @@
       ],
       "folders": [
         "Plater"
-      ]
+      ],
+      "verified": {
+        "date": "2026-11-09",
+        "ciBuilds": true
+      }
     },
     {
       "id": "kuinameplates",
@@ -300,7 +368,12 @@
         "Kui_Nameplates_Core",
         "Kui_Media",
         "Kui_Nameplates_Core_Config"
-      ]
+      ],
+      "verified": {
+        "date": "2026-11-09",
+        "ciBuilds": true,
+        "note": "No new release since July 2025."
+      }
     },
     {
       "id": "bartender4",
@@ -317,7 +390,11 @@
       ],
       "folders": [
         "Bartender4"
-      ]
+      ],
+      "verified": {
+        "date": "2026-11-09",
+        "ciBuilds": true
+      }
     },
     {
       "id": "dominos",
@@ -340,7 +417,11 @@
         "Dominos_Config",
         "Masque_Dominos",
         "Dominos_Progress"
-      ]
+      ],
+      "verified": {
+        "date": "2026-11-09",
+        "ciBuilds": true
+      }
     },
     {
       "id": "omnicc",
@@ -358,7 +439,12 @@
       "folders": [
         "OmniCC",
         "OmniCC_Config"
-      ]
+      ],
+      "verified": {
+        "date": "2026-11-09",
+        "ciBuilds": true,
+        "note": "No new release since December 2025."
+      }
     },
     {
       "id": "weakauras",
@@ -379,7 +465,11 @@
         "WeakAurasOptions",
         "WeakAurasTemplates",
         "WeakAurasModelPaths"
-      ]
+      ],
+      "verified": {
+        "date": "2026-11-09",
+        "ciBuilds": true
+      }
     },
     {
       "id": "mapster",
@@ -393,7 +483,11 @@
       ],
       "folders": [
         "Mapster"
-      ]
+      ],
+      "verified": {
+        "date": "2026-11-09",
+        "ciBuilds": true
+      }
     },
     {
       "id": "advancedinterfaceoptions",
@@ -412,7 +506,11 @@
       ],
       "folders": [
         "AdvancedInterfaceOptions"
-      ]
+      ],
+      "verified": {
+        "date": "2026-11-09",
+        "ciBuilds": true
+      }
     }
   ]
 }

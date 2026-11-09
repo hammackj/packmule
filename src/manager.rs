@@ -8,7 +8,7 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::{Context, Result, anyhow, bail};
 
-use crate::catalog::{Catalog, CatalogEntry, matches_entry, product_flavor};
+use crate::catalog::{Catalog, CatalogEntry, ReviewStatus, matches_entry, product_flavor};
 use crate::game::{GameInstall, addons_dir, detect_installs};
 use crate::github::{GitHubClient, RateLimit, ReleaseAsset, parse_repo, tag_stream};
 use crate::http::Http;
@@ -39,6 +39,11 @@ pub struct AddonView {
     pub busy: bool,
     /// From the addon's .toc "## Category", else the catalog.
     pub category: Option<String>,
+    /// Catalog addons only: the source check, and the review status of the
+    /// installed build and of the latest build.
+    pub verified: bool,
+    pub installed_review: Option<ReviewStatus>,
+    pub latest_review: Option<ReviewStatus>,
 }
 
 /// An AddOns folder Packmule didn't install; never modified.
@@ -58,6 +63,8 @@ pub struct CatalogView {
     /// Has a build for the active game client.
     pub available: bool,
     pub busy: bool,
+    /// Review status of the installed build, or of the newest reviewed release.
+    pub review: ReviewStatus,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -235,7 +242,7 @@ impl Manager {
         self.store.addons(&self.store.settings().active_install)
     }
 
-    fn records_mut(&mut self) -> &mut Vec<AddonRecord> {
+    pub(crate) fn records_mut(&mut self) -> &mut Vec<AddonRecord> {
         let dir = self.active_dir();
         self.store.addons_mut(&dir)
     }
@@ -314,6 +321,13 @@ impl Manager {
                     status: self.status(r),
                     busy: self.busy.contains(&r.key()),
                     category: toc.and_then(|t| t.category).or_else(|| from_catalog.map(|e| e.category.clone())),
+                    verified: from_catalog.is_some_and(|e| e.verified.is_some()),
+                    installed_review: from_catalog
+                        .filter(|_| r.installed_tag.is_some())
+                        .map(|e| e.review_status(r.installed_sha256.as_deref())),
+                    latest_review: from_catalog
+                        .filter(|_| r.latest_tag.is_some())
+                        .map(|e| e.review_status(r.latest_sha256.as_deref())),
                     record: r.clone(),
                 });
             }
@@ -347,6 +361,7 @@ impl Manager {
                     installed: install.is_some() && record.is_some_and(|r| r.installed_tag.is_some()),
                     available: flavor.is_some_and(|f| e.flavors.iter().any(|x| x == f)),
                     busy: record.is_some_and(|r| self.busy.contains(&r.key())),
+                    review: e.review_status(record.and_then(|r| r.installed_sha256.as_deref())),
                     entry: e.clone(),
                 }
             })
@@ -403,6 +418,11 @@ impl Manager {
 
     /// Fetches the published catalog; keeps the bundled one when offline.
     pub fn refresh_catalog(&mut self) {
+        // Debug builds only: PACKMULE_BUNDLED_CATALOG=1 tries catalog.json edits
+        // before they are pushed.
+        if cfg!(debug_assertions) && std::env::var_os("PACKMULE_BUNDLED_CATALOG").is_some() {
+            return;
+        }
         if self.catalog.refresh(self.http.as_ref()) {
             self.changed();
         }
@@ -433,6 +453,11 @@ impl Manager {
         r.latest_tag = Some(release.tag_name);
         r.latest_asset_id = Some(choice.asset.id);
         r.latest_asset_name = Some(choice.asset.name.clone());
+        r.latest_sha256 = choice.asset.sha256();
+        // Installs from before hashes were kept: the same asset is the same zip.
+        if r.installed_sha256.is_none() && r.installed_asset_id == Some(choice.asset.id) {
+            r.installed_sha256 = r.latest_sha256.clone();
+        }
         r.compat_warning = choice.compat_warning;
         r.last_checked = Some(now());
         Ok(choice.asset)
@@ -455,6 +480,7 @@ impl Manager {
             r.folders = install_asset(self.http.as_ref(), &self.addons_path(), &asset, &r.folders, &foreign)?;
             r.installed_tag = r.latest_tag.clone();
             r.installed_asset_id = Some(asset.id);
+            r.installed_sha256 = asset.sha256();
             r.installed_at = Some(now());
             r.error = None;
             self.log(
@@ -656,6 +682,8 @@ impl Manager {
             toc.version.map_or_else(|| "installed by hand".into(), |v| format!("{v} (by hand)"))
         });
         record.installed_asset_id = if current { record.latest_asset_id } else { None };
+        // Only trust the hash when the .toc version says it's that release.
+        record.installed_sha256 = if current { record.latest_sha256.clone() } else { None };
         if let Err(e) = self.put(record) {
             self.log(LogLevel::Error, format!("Could not save {label}: {e:#}"));
             return false;

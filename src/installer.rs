@@ -60,6 +60,22 @@ pub fn extract_zip(zip_path: &Path, dest: &Path) -> Result<()> {
     Ok(())
 }
 
+/// SHA-256 of a file, lowercase hex.
+pub fn sha256_file(path: &Path) -> Result<String> {
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    let mut file = File::open(path)?;
+    let mut buf = vec![0u8; 1 << 16];
+    loop {
+        let n = file.read(&mut buf)?;
+        if n == 0 {
+            break;
+        }
+        hasher.update(&buf[..n]);
+    }
+    Ok(hasher.finalize().iter().map(|b| format!("{b:02x}")).collect())
+}
+
 fn has_toc(dir: &Path) -> bool {
     fs::read_dir(dir)
         .map(|rd| rd.filter_map(|e| e.ok()).any(|e| e.file_name().to_string_lossy().to_lowercase().ends_with(".toc")))
@@ -126,6 +142,15 @@ pub fn install_asset(
     let result = (|| -> Result<Vec<String>> {
         let zip_path = staging.join("addon.zip");
         http.download(&asset.browser_download_url, &zip_path)?;
+        if let Some(expected) = asset.sha256() {
+            let actual = sha256_file(&zip_path)?;
+            if actual != expected {
+                bail!(
+                    "Download of {} is corrupt or was changed (SHA-256 {actual}, GitHub says {expected})",
+                    asset.name
+                );
+            }
+        }
         extract_zip(&zip_path, &extracted)?;
         let (base, folders) = find_addon_folders(&extracted)?;
 
@@ -195,7 +220,7 @@ mod tests {
     use crate::testutil::{FakeHttp, make_zip, make_zip_with_symlink};
 
     fn asset(url: &str) -> ReleaseAsset {
-        ReleaseAsset { id: 1, name: "a.zip".into(), size: 0, browser_download_url: url.into() }
+        ReleaseAsset { id: 1, name: "a.zip".into(), size: 0, browser_download_url: url.into(), digest: None }
     }
 
     fn setup() -> (tempfile::TempDir, PathBuf) {
@@ -252,6 +277,27 @@ mod tests {
         let e = install_asset(&http, &addons, &asset("https://dl/link.zip"), &[], &HashSet::new()).unwrap_err();
         assert!(e.to_string().contains("Symlink"), "{e}");
         assert!(list_addon_folders(&addons).is_empty());
+    }
+
+    #[test]
+    fn checks_the_sha256() {
+        let (_dir, addons) = setup();
+        let http = FakeHttp::default();
+        let zip = make_zip(&[("Foo/Foo.toc", b"x".as_slice())], false);
+        http.serve("https://dl/a.zip", zip.clone());
+        let tmp = tempfile::NamedTempFile::new().unwrap();
+        fs::write(tmp.path(), &zip).unwrap();
+        let good = sha256_file(tmp.path()).unwrap();
+
+        let mut a = asset("https://dl/a.zip");
+        a.digest = Some(format!("sha256:{}", "0".repeat(64)));
+        let e = install_asset(&http, &addons, &a, &[], &HashSet::new()).unwrap_err();
+        assert!(e.to_string().contains("corrupt or was changed"), "{e}");
+        assert!(list_addon_folders(&addons).is_empty());
+
+        a.digest = Some(format!("sha256:{}", good.to_uppercase()));
+        install_asset(&http, &addons, &a, &[], &HashSet::new()).unwrap();
+        assert!(addons.join("Foo/Foo.toc").exists());
     }
 
     #[test]

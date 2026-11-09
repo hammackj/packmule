@@ -175,9 +175,12 @@ impl FakeHttp {
             for (name, body) in files {
                 id += 1;
                 let url = format!("https://dl.example/{}/{}/{name}", r.repo, r.tag);
-                assets.push(
-                    serde_json::json!({ "id": id, "name": name, "size": body.len(), "browser_download_url": url }),
-                );
+                use sha2::{Digest, Sha256};
+                let digest: String = Sha256::digest(&body).iter().map(|b| format!("{b:02x}")).collect();
+                assets.push(serde_json::json!({
+                    "id": id, "name": name, "size": body.len(), "browser_download_url": url,
+                    "digest": format!("sha256:{digest}")
+                }));
                 self.serve(&url, body);
             }
             list.push(serde_json::json!({

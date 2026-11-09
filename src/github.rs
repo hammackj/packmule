@@ -17,6 +17,16 @@ pub struct ReleaseAsset {
     pub name: String,
     pub size: u64,
     pub browser_download_url: String,
+    /// "sha256:<hex>", which GitHub computes for every release asset.
+    #[serde(default)]
+    pub digest: Option<String>,
+}
+
+impl ReleaseAsset {
+    /// The asset's SHA-256 in lowercase hex, when GitHub provided one.
+    pub fn sha256(&self) -> Option<String> {
+        self.digest.as_deref()?.strip_prefix("sha256:").map(str::to_ascii_lowercase)
+    }
 }
 
 #[derive(Debug, Clone, Deserialize)]

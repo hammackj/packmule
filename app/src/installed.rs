@@ -3,10 +3,12 @@
 
 use std::collections::BTreeMap;
 
+use gpui::prelude::FluentBuilder;
 use gpui::*;
 use gpui_component::button::{Button, ButtonVariants};
 use gpui_component::input::Input;
 use gpui_component::{Disableable, Sizable, h_flex, v_flex};
+use packmule::catalog::ReviewStatus;
 use packmule::manager::{AddonStatus, AddonView, AppState, ManualAddon};
 use packmule::worker::Command;
 
@@ -246,7 +248,8 @@ impl PackmuleView {
                         .child(display)
                         .on_click(move |_, _, cx| cx.open_url(&page)),
                 )
-                .child(badge("GitHub", MUTED)),
+                .child(badge("GitHub", MUTED))
+                .when_some(a.installed_review.as_ref(), |d, r| d.child(review_badge(format!("review-{key}"), r))),
         );
         if !a.record.folders.is_empty() {
             name_col = name_col.child(muted(a.record.folders.join(", ")));
@@ -255,6 +258,12 @@ impl PackmuleView {
         let mut latest = v_flex().child(a.record.latest_tag.clone().unwrap_or_else(|| "—".into()));
         if let Some(n) = &a.record.latest_asset_name {
             latest = latest.child(muted(n.clone()));
+        }
+        // An update that hasn't been reviewed, from an addon whose installed build was.
+        if a.status == AddonStatus::UpdateAvailable
+            && let Some(r @ (ReviewStatus::NotReviewed(_) | ReviewStatus::Flagged(_))) = &a.latest_review
+        {
+            latest = latest.child(review_badge(format!("latest-review-{key}"), r));
         }
 
         row()

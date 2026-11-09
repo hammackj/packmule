@@ -1,6 +1,8 @@
 //! Small shared pieces: badges, muted text, times.
 
 use gpui::*;
+use gpui_component::tooltip::Tooltip;
+use packmule::catalog::{ReviewStatus, Verified};
 
 use crate::theme::*;
 
@@ -21,6 +23,64 @@ pub fn badge(label: impl Into<SharedString>, color: u32) -> Div {
         .bg(with_alpha(color, 0.16))
         .text_color(hex(color))
         .child(label.into())
+}
+
+/// A badge that explains itself on hover and, with a URL, opens it on click.
+fn explained(id: SharedString, b: Div, tip: String, url: Option<String>) -> AnyElement {
+    let mut el = b.id(id).tooltip(move |window, cx| Tooltip::new(tip.clone()).build(window, cx));
+    if let Some(url) = url {
+        el = el.cursor_pointer().on_click(move |_, _, cx| cx.open_url(&url));
+    }
+    el.into_any_element()
+}
+
+fn report_url(report: &str) -> String {
+    format!("https://github.com/hammackj/packmule/blob/master/{report}")
+}
+
+/// "Reviewed" / "Flagged" / "Not reviewed" for a build.
+pub fn review_badge(id: impl Into<SharedString>, status: &ReviewStatus) -> AnyElement {
+    let (b, tip, report) = match status {
+        ReviewStatus::Reviewed(r) => (
+            badge("Reviewed", OK),
+            format!(
+                "Claude and Codex reviewed this exact build ({}) on {} for malicious code, and both passed it. Click for the report.",
+                r.tag, r.date
+            ),
+            Some(&r.report),
+        ),
+        ReviewStatus::Flagged(r) => (
+            badge("Flagged", ERR),
+            format!(
+                "This build ({}) did not pass its code review (Claude: {}, Codex: {}). Read the report before using it.",
+                r.tag, r.claude, r.codex
+            ),
+            Some(&r.report),
+        ),
+        ReviewStatus::NotReviewed(Some(r)) => (
+            badge("Not reviewed", MUTED),
+            format!("This build hasn't been code reviewed yet. {} was reviewed and passed.", r.tag),
+            None,
+        ),
+        ReviewStatus::NotReviewed(None) => {
+            (badge("Not reviewed", MUTED), "No release of this addon has been code reviewed yet.".into(), None)
+        }
+    };
+    explained(id.into(), b, tip, report.map(|r| report_url(r)))
+}
+
+/// "Verified source": the repository is the author's official one.
+pub fn verified_badge(id: impl Into<SharedString>, v: &Verified) -> AnyElement {
+    let built = if v.ci_builds {
+        "Releases are built automatically from the tagged source."
+    } else {
+        "Release zips are uploaded by the author, not built from the source automatically."
+    };
+    let mut tip = format!("This is the author's official repository (checked {}). {built}", v.date);
+    if !v.note.is_empty() {
+        tip = format!("{tip} {}", v.note);
+    }
+    explained(id.into(), badge("Verified source", INFO), tip, None)
 }
 
 pub fn muted(text: impl Into<SharedString>) -> Div {

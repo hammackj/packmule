@@ -56,6 +56,8 @@ carry over; only a saved GitHub token needs entering again.
   unchanged repositories cost no GitHub rate limit. Updates can install
   automatically. A GitHub token in Settings raises the limit if you manage many
   addons.
+- **Downloads are checked:** each zip's SHA-256 must match the one GitHub
+  publishes for the release asset.
 - **Data:** `~/.config/packmule/state.json`. The GitHub token is kept in the
   system keyring (KWallet, GNOME Keyring) when one is available.
 
@@ -74,6 +76,21 @@ That reads each addon's latest release and fills in `flavors` (from its
 `release.json`) and `folders` (from the zip's file index). Addons
 whose releases have no `release.json` keep the flavors written by hand, so only
 list versions you've checked.
+
+### Verified and reviewed
+
+Browse and Installed show two kinds of badge:
+
+- **Verified source:** the entry's repository was checked to be the author's
+  official one (not a fork or lookalike), noting whether its zips are built by
+  CI or uploaded by hand.
+- **Reviewed:** Claude and Codex both read the code of that exact release zip
+  (matched by SHA-256) looking for malicious behaviour, and both passed it.
+  Other builds show **Not reviewed**, and a build whose review didn't pass
+  shows **Flagged**. Badges are information only; nothing blocks an install.
+
+How reviews work, what they look for and how to run one is in
+[REVIEWS.md](REVIEWS.md); reports live in `reviews/`.
 
 ## Development
 

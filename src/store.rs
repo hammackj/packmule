@@ -65,6 +65,11 @@ pub struct AddonRecord {
     pub latest_tag: Option<String>,
     #[serde(default)]
     pub latest_asset_name: Option<String>,
+    /// SHA-256 of the installed and the latest zip, when GitHub gave one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub installed_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub latest_sha256: Option<String>,
     #[serde(default)]
     pub last_checked: Option<String>,
     /// Set when the latest release has no build listed for this client's interface.
@@ -89,6 +94,8 @@ impl AddonRecord {
             installed_at: None,
             latest_tag: None,
             latest_asset_name: None,
+            installed_sha256: None,
+            latest_sha256: None,
             last_checked: None,
             compat_warning: None,
             error: None,

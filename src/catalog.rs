@@ -35,6 +35,76 @@ pub struct CatalogEntry {
     /// Other catalog ids this addon needs.
     #[serde(default)]
     pub requires: Vec<String>,
+    /// Source check: this is the author's official repository.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub verified: Option<Verified>,
+    /// Code reviews of specific release builds, newest first.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub reviews: Vec<Review>,
+}
+
+/// The repository was checked to be the addon author's official one (matching
+/// its CurseForge / Wago / WowAce page), not a fork or a lookalike.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Verified {
+    /// When it was checked (YYYY-MM-DD).
+    pub date: String,
+    /// Release zips are built by CI from tagged source (not uploaded by hand).
+    #[serde(default)]
+    pub ci_builds: bool,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub note: String,
+}
+
+/// An AI code review of one release, covering the exact zips by SHA-256.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Review {
+    pub tag: String,
+    /// SHA-256 (hex) of every zip of the release the review covers.
+    pub sha256: Vec<String>,
+    /// YYYY-MM-DD.
+    pub date: String,
+    /// Each reviewer's verdict: "pass", "fail" or "unsure".
+    pub claude: String,
+    pub codex: String,
+    /// The report, relative to the repository root.
+    pub report: String,
+}
+
+impl Review {
+    /// Both reviewers passed it.
+    pub fn passed(&self) -> bool {
+        self.claude == "pass" && self.codex == "pass"
+    }
+
+    pub fn covers(&self, sha256: &str) -> bool {
+        self.sha256.iter().any(|h| h.eq_ignore_ascii_case(sha256))
+    }
+}
+
+/// Where a build stands with the catalog's reviews.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ReviewStatus {
+    /// This exact zip passed both reviews.
+    Reviewed(Review),
+    /// This zip has a review that didn't pass.
+    Flagged(Review),
+    /// Not reviewed; the newest review that passed, if any.
+    NotReviewed(Option<Review>),
+}
+
+impl CatalogEntry {
+    /// The review status of a build with this SHA-256 (None = hash unknown).
+    pub fn review_status(&self, sha256: Option<&str>) -> ReviewStatus {
+        if let Some(h) = sha256
+            && let Some(r) = self.reviews.iter().find(|r| r.covers(h))
+        {
+            return if r.passed() { ReviewStatus::Reviewed(r.clone()) } else { ReviewStatus::Flagged(r.clone()) };
+        }
+        ReviewStatus::NotReviewed(self.reviews.iter().find(|r| r.passed()).cloned())
+    }
 }
 
 fn valid_repo(repo: &str) -> bool {
@@ -144,6 +214,27 @@ mod tests {
         ]});
         let ids: Vec<_> = parse(&doc).into_iter().map(|e| e.id).collect();
         assert_eq!(ids, ["a"]);
+    }
+
+    #[test]
+    fn review_status() {
+        let mut e = Catalog::default().entry("satchel").unwrap().clone();
+        let review = |tag: &str, sha: &str, claude: &str, codex: &str| Review {
+            tag: tag.into(),
+            sha256: vec![sha.into()],
+            date: "2026-11-09".into(),
+            claude: claude.into(),
+            codex: codex.into(),
+            report: String::new(),
+        };
+        let (v3, v2) = (review("v3", "cc", "fail", "pass"), review("v2", "bb", "pass", "pass"));
+        e.reviews = vec![v3.clone(), v2.clone()];
+        assert_eq!(e.review_status(Some("BB")), ReviewStatus::Reviewed(v2.clone()));
+        assert_eq!(e.review_status(Some("cc")), ReviewStatus::Flagged(v3));
+        assert_eq!(e.review_status(Some("dd")), ReviewStatus::NotReviewed(Some(v2.clone())));
+        assert_eq!(e.review_status(None), ReviewStatus::NotReviewed(Some(v2)));
+        e.reviews.clear();
+        assert_eq!(e.review_status(Some("bb")), ReviewStatus::NotReviewed(None));
     }
 
     #[test]
