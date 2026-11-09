@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Packmule
+GenericName=World of Warcraft Addon Manager
+Comment=Install and update World of Warcraft addons from GitHub releases
+Exec=packmule
+Icon=packmule
+Terminal=false
+Categories=Game;
+Keywords=wow;warcraft;addon;addons;forever;
+StartupWMClass=packmule
+StartupNotify=true
