@@ -16,6 +16,9 @@ use crate::theme::*;
 use crate::ui::*;
 use crate::view::PackmuleView;
 
+/// Category, name, three lines of description, "Needs", badges, footer.
+const CARD_HEIGHT: f32 = 214.;
+
 pub fn flavor_label(flavor: Option<&str>) -> String {
     match flavor {
         Some("forever") => "WoW Forever".into(),
@@ -173,32 +176,45 @@ impl PackmuleView {
                 .into_any_element()
         };
 
+        // Every card the same size: the description is clamped (full text on hover).
+        let description = e.entry.description.clone();
         let mut card = v_flex()
             .w(px(268.))
-            .min_h(px(150.))
+            .h(px(CARD_HEIGHT))
             .p_3()
-            .gap_2()
+            .gap(px(6.))
             .rounded_lg()
             .bg(hex(PANEL))
             .border_1()
             .border_color(hex(BORDER))
+            .overflow_hidden()
             .when(!e.available, |d| d.opacity(0.6))
             .child(
-                h_flex()
-                    .gap_2()
-                    .child(
-                        div()
-                            .id(SharedString::from(format!("repo-{id}")))
-                            .flex_1()
-                            .font_weight(FontWeight::SEMIBOLD)
-                            .cursor_pointer()
-                            .hover(|st| st.text_color(hex(ACCENT)))
-                            .child(e.entry.name.clone())
-                            .on_click(move |_, _, cx| cx.open_url(&repo_url)),
-                    )
-                    .child(badge(e.entry.category.clone(), MUTED)),
+                v_flex().child(small(e.entry.category.to_uppercase(), MUTED).truncate()).child(
+                    div()
+                        .id(SharedString::from(format!("repo-{id}")))
+                        .truncate()
+                        .font_weight(FontWeight::SEMIBOLD)
+                        .cursor_pointer()
+                        .hover(|st| st.text_color(hex(ACCENT)))
+                        .child(e.entry.name.clone())
+                        .on_click(move |_, _, cx| cx.open_url(&repo_url)),
+                ),
             )
-            .child(div().flex_1().text_color(hex(TEXT)).child(e.entry.description.clone()));
+            .child(
+                div()
+                    .id(SharedString::from(format!("desc-{id}")))
+                    .flex_1()
+                    .min_h_0()
+                    .overflow_hidden()
+                    .line_clamp(3)
+                    .text_ellipsis()
+                    .text_color(hex(TEXT))
+                    .child(description.clone())
+                    .tooltip(move |window, cx| {
+                        gpui_component::tooltip::Tooltip::new(description.clone()).build(window, cx)
+                    }),
+            );
         if !e.entry.requires.is_empty() {
             let needs: Vec<&str> =
                 e.entry.requires.iter().map(|r| names.get(r.as_str()).copied().unwrap_or(r)).collect();
@@ -208,6 +224,11 @@ impl PackmuleView {
         if let Some(v) = &e.entry.verified {
             trust = trust.child(verified_badge(format!("verified-{id}"), v));
         }
-        card.child(trust).child(h_flex().gap_2().child(div().flex_1().child(muted(e.entry.repo.clone()))).child(action))
+        card.child(trust).child(
+            h_flex()
+                .gap_2()
+                .child(div().flex_1().min_w_0().child(muted(e.entry.repo.clone()).truncate()))
+                .child(action),
+        )
     }
 }
