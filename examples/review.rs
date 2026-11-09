@@ -137,7 +137,7 @@ fn main() -> Result<()> {
         bail!("usage: cargo run --example review -- <catalog id> [--keep] [--dry-run]");
     };
     let catalog_file = Path::new(ROOT).join("catalog.json");
-    let mut catalog: Value = serde_json::from_str(&fs::read_to_string(&catalog_file)?)?;
+    let catalog: Value = serde_json::from_str(&fs::read_to_string(&catalog_file)?)?;
     let entry =
         parse(&catalog).into_iter().find(|e| e.id == id).with_context(|| format!("{id} is not in catalog.json"))?;
     if !dry_run {
@@ -254,6 +254,8 @@ fn main() -> Result<()> {
     fs::create_dir_all(report.parent().unwrap())?;
     fs::write(&report, md)?;
 
+    // Read again: other reviews may have finished while this one ran.
+    let mut catalog: Value = serde_json::from_str(&fs::read_to_string(&catalog_file)?)?;
     let addons = catalog["addons"].as_array_mut().context("no addons list")?;
     let e = addons.iter_mut().find(|e| e["id"] == id.as_str()).context("entry vanished")?;
     let mut reviews: Vec<Review> = serde_json::from_value(e["reviews"].clone()).unwrap_or_default();
