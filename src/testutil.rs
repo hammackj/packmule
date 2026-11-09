@@ -203,3 +203,16 @@ pub fn manifest(builds: &[(&str, &str, u32)]) -> serde_json::Value {
         "filename": f, "nolib": false, "metadata": [{ "flavor": flavor, "interface": iface }]
     })).collect::<Vec<_>>() })
 }
+
+/// A .tar.gz with the given files (mode 755).
+pub fn tarball_with(files: &[(&str, &[u8])]) -> Vec<u8> {
+    let mut builder = tar::Builder::new(flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast()));
+    for (name, body) in files {
+        let mut header = tar::Header::new_gnu();
+        header.set_size(body.len() as u64);
+        header.set_mode(0o755);
+        header.set_cksum();
+        builder.append_data(&mut header, name, *body).unwrap();
+    }
+    builder.into_inner().unwrap().finish().unwrap()
+}

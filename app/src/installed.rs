@@ -3,7 +3,6 @@
 
 use std::collections::BTreeMap;
 
-use gpui::prelude::FluentBuilder;
 use gpui::*;
 use gpui_component::button::{Button, ButtonVariants};
 use gpui_component::input::Input;
@@ -183,6 +182,9 @@ impl PackmuleView {
 
         let mut status =
             v_flex().gap_1().items_start().child(if a.busy { badge("Working…", INFO) } else { badge(label, color) });
+        if let Some(r) = &a.installed_review {
+            status = status.child(review_badge(format!("review-{key}"), r));
+        }
         if let Some(w) = &a.record.compat_warning {
             status = status.child(small(format!("⚠ {w}"), WARN));
         }
@@ -248,8 +250,7 @@ impl PackmuleView {
                         .child(display)
                         .on_click(move |_, _, cx| cx.open_url(&page)),
                 )
-                .child(badge("GitHub", MUTED))
-                .when_some(a.installed_review.as_ref(), |d, r| d.child(review_badge(format!("review-{key}"), r))),
+                .child(badge("GitHub", MUTED)),
         );
         if !a.record.folders.is_empty() {
             name_col = name_col.child(muted(a.record.folders.join(", ")));

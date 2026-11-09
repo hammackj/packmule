@@ -18,6 +18,8 @@ pub enum Command {
     RemoveAddon(String),
     UpdateAll,
     CheckUpdates,
+    /// Install the available Packmule update.
+    InstallAppUpdate,
     /// Re-read the GitHub API allowance (for Settings).
     RefreshRateLimit,
     Shutdown,
@@ -102,6 +104,7 @@ fn run(mut m: Manager, rx: Receiver<Command>, startup_checks: bool) {
             Command::InstallAddon(key) => report(&mut m, |m| m.install_addon(&key)),
             Command::RemoveAddon(key) => report(&mut m, |m| m.remove_addon(&key)),
             Command::UpdateAll => report(&mut m, |m| m.update_all()),
+            Command::InstallAppUpdate => report(&mut m, |m| m.install_app_update()),
             Command::CheckUpdates | Command::Timer => {
                 last_check = Instant::now();
                 if m.has_active_install() {

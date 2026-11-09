@@ -261,13 +261,31 @@ impl PackmuleView {
         let mut out = v_flex();
         if let Some(update) = &s.app_update {
             let url = update.url.clone();
-            out = out.child(
-                banner(INFO)
-                    .child(format!("Packmule {} is available (you have {}).", update.version, s.app_version))
+            let notes = Button::new("release-notes").xsmall().on_click(move |_, _, cx| cx.open_url(&url));
+            let b = banner(INFO);
+            out = out.child(if update.installed {
+                b.child(format!("Packmule {} is installed. Restart to start using it.", update.version))
+                    .child(Button::new("restart").xsmall().primary().label("Restart").on_click(|_, _, cx| restart(cx)))
+            } else if update.can_install {
+                b.child(format!("Packmule {} is available (you have {}).", update.version, s.app_version))
+                    .child(notes.label("What's new"))
                     .child(
-                        Button::new("download").xsmall().label("Download").on_click(move |_, _, cx| cx.open_url(&url)),
-                    ),
-            );
+                        Button::new("install-update")
+                            .xsmall()
+                            .primary()
+                            .label(if update.installing { "Updating…" } else { "Update" })
+                            .loading(update.installing)
+                            .disabled(update.installing)
+                            .on_click(cx.listener(|this, _, _, cx| this.send(Command::InstallAppUpdate, cx))),
+                    )
+            } else {
+                // Installed by a package manager (or run from source): it updates Packmule.
+                b.child(format!(
+                    "Packmule {} is available (you have {}). Update it the way you installed it.",
+                    update.version, s.app_version
+                ))
+                .child(notes.label("Download"))
+            });
         }
         if let Some(err) = &s.path_error {
             out = out.child(
@@ -392,5 +410,19 @@ impl Render for PackmuleView {
             root = root.child(self.render_settings(&state, window, cx));
         }
         root
+    }
+}
+
+/// Starts the newly installed Packmule and quits this one.
+fn restart(cx: &mut App) {
+    // The running binary was replaced, so /proc/self/exe reads "… (deleted)".
+    let exe = std::env::current_exe().map(|p| {
+        let s = p.to_string_lossy().into_owned();
+        std::path::PathBuf::from(s.strip_suffix(" (deleted)").unwrap_or(&s).to_string())
+    });
+    if let Ok(exe) = exe
+        && std::process::Command::new(exe).arg("--restarted").spawn().is_ok()
+    {
+        cx.quit();
     }
 }

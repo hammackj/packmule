@@ -10,6 +10,7 @@ pub mod github;
 pub mod http;
 pub mod installer;
 pub mod manager;
+pub mod selfupdate;
 pub mod store;
 pub mod toc;
 pub mod version;

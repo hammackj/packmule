@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 use crate::catalog::{Catalog, CatalogEntry};
 use crate::manager::{AddonStatus, AppState, Event, Manager, SettingsUpdate};
 use crate::store::{MemorySecret, Store};
-use crate::testutil::{FakeHttp, FakeRelease, make_zip, manifest};
+use crate::testutil::{FakeHttp, FakeRelease, make_zip, manifest, tarball_with};
 
 struct Env {
     _dir: tempfile::TempDir,
@@ -269,6 +269,32 @@ fn packmule_update_banner() {
     m.check_app_update();
     let update = m.state().app_update.unwrap();
     assert_eq!(update.version, "0.3.0");
+    // No tarball, and nowhere to install it: link only.
+    assert!(!update.can_install);
+    assert!(m.install_app_update().is_err());
+}
+
+#[test]
+fn packmule_installs_its_own_update() {
+    let e = env();
+    let tgz = tarball_with(&[("packmule-0.3.0-x86_64-linux/bin/packmule", b"\x7fELF 0.3.0")]);
+    e.http.releases(&[FakeRelease {
+        repo: "hammackj/packmule",
+        tag: "v0.3.0",
+        zips: vec![("packmule-0.3.0-x86_64-linux.tar.gz", tgz), ("packmule_0.3.0_amd64.deb", b"deb".to_vec())],
+        manifest: None,
+    }]);
+    let bin = tempfile::tempdir().unwrap();
+    let exe = bin.path().join("packmule");
+    fs::write(&exe, b"\x7fELF 0.2.0").unwrap();
+    let mut m = e.manager(Vec::new());
+    m.set_self_update_target(Some(exe.clone()));
+    m.check_app_update();
+    assert!(m.state().app_update.unwrap().can_install);
+    m.install_app_update().unwrap();
+    assert!(m.state().app_update.unwrap().installed);
+    assert_eq!(fs::read(&exe).unwrap(), b"\x7fELF 0.3.0");
+    assert!(e.logs().contains("Installed Packmule 0.3.0"));
 }
 
 #[test]

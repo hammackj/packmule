@@ -13,6 +13,7 @@ use crate::game::{GameInstall, addons_dir, detect_installs};
 use crate::github::{GitHubClient, RateLimit, ReleaseAsset, parse_repo, tag_stream};
 use crate::http::Http;
 use crate::installer::{install_asset, list_addon_folders, remove_folders, verify_folders};
+use crate::selfupdate;
 use crate::store::{AddonRecord, Settings, Store, addon_key};
 use crate::toc::read_toc_info;
 use crate::version::newer_version;
@@ -70,7 +71,13 @@ pub struct CatalogView {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AppUpdate {
     pub version: String,
+    /// The release page.
     pub url: String,
+    /// Packmule can install it itself (a .tar.gz install it can write to).
+    pub can_install: bool,
+    /// Installed; takes effect when Packmule restarts.
+    pub installed: bool,
+    pub installing: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -153,6 +160,10 @@ pub struct Manager {
     checking: bool,
     last_check: Option<String>,
     app_update: Option<AppUpdate>,
+    /// The new release's tarball, for installing it.
+    app_tarball: Option<ReleaseAsset>,
+    /// The running binary, when it may be replaced in place (see selfupdate).
+    self_update_target: Option<PathBuf>,
     /// "folder>owner/repo" pairs from .toc links already checked this session.
     link_checked: HashSet<String>,
 }
@@ -182,6 +193,8 @@ impl Manager {
             checking: false,
             last_check: None,
             app_update: None,
+            app_tarball: None,
+            self_update_target: None,
             link_checked: HashSet::new(),
         };
         m.refresh_installs();
@@ -439,11 +452,60 @@ impl Manager {
     pub fn check_app_update(&mut self) {
         let Ok(release) = self.github.latest_release(APP_REPO, None) else { return };
         let latest = release.tag_name.trim_start_matches('v').to_string();
-        if newer_version(&latest, &self.app_version) {
-            self.log(LogLevel::Info, format!("Packmule {latest} is available (you have {})", self.app_version));
-            self.app_update = Some(AppUpdate { version: latest, url: release.html_url });
-            self.changed();
+        if !newer_version(&latest, &self.app_version) {
+            return;
         }
+        if self.app_update.as_ref().is_some_and(|u| u.version == latest) {
+            return;
+        }
+        self.log(LogLevel::Info, format!("Packmule {latest} is available (you have {})", self.app_version));
+        self.app_tarball = selfupdate::tarball(&release.assets).cloned();
+        let can_install = self.self_update_target.is_some() && self.app_tarball.is_some();
+        self.app_update = Some(AppUpdate {
+            version: latest,
+            url: release.html_url,
+            can_install,
+            installed: false,
+            installing: false,
+        });
+        self.changed();
+    }
+
+    /// Where Packmule may replace its own binary (None: it can't, so updates
+    /// only link to the release).
+    pub fn set_self_update_target(&mut self, exe: Option<PathBuf>) {
+        self.self_update_target = exe;
+    }
+
+    /// Installs the available Packmule update over the running binary.
+    pub fn install_app_update(&mut self) -> Result<()> {
+        let (Some(update), Some(asset), Some(exe)) =
+            (self.app_update.clone(), self.app_tarball.clone(), self.self_update_target.clone())
+        else {
+            bail!("No Packmule update to install");
+        };
+        if update.installed {
+            return Ok(());
+        }
+        self.set_app_update(|u| u.installing = true);
+        self.log(LogLevel::Info, format!("Installing Packmule {} to {}", update.version, exe.display()));
+        let result = selfupdate::install(self.http.as_ref(), &asset, &exe);
+        self.set_app_update(|u| {
+            u.installing = false;
+            u.installed = result.is_ok();
+        });
+        match &result {
+            Ok(()) => self.log(LogLevel::Info, format!("Installed Packmule {}; restart to use it", update.version)),
+            Err(e) => self.log(LogLevel::Error, format!("Packmule update failed: {e:#}")),
+        }
+        result
+    }
+
+    fn set_app_update(&mut self, f: impl FnOnce(&mut AppUpdate)) {
+        if let Some(u) = &mut self.app_update {
+            f(u);
+        }
+        self.changed();
     }
 
     /// Finds the newest build of a record for this client and records it as latest.

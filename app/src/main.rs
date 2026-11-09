@@ -24,9 +24,16 @@ fn main() {
 
     // One Packmule at a time: two would race on state.json and AddOns.
     let lock = File::create(config.join("packmule.lock")).expect("cannot create the lock file");
-    if lock.try_lock().is_err() {
-        eprintln!("Packmule is already running.");
-        return;
+    // After installing an update, the old Packmule starts the new one and
+    // quits: give it a moment to let go of the lock.
+    let restarted = std::env::args().any(|a| a == "--restarted");
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(if restarted { 10 } else { 0 });
+    while lock.try_lock().is_err() {
+        if std::time::Instant::now() >= deadline {
+            eprintln!("Packmule is already running.");
+            return;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(100));
     }
 
     let (tx, rx) = async_channel::unbounded();
@@ -34,9 +41,17 @@ fn main() {
     let worker = Worker::spawn(
         move || {
             let store = Store::load(&state_file, Box::new(Keyring));
-            Manager::new(store, Arc::new(UreqHttp::new()), Catalog::default(), env!("CARGO_PKG_VERSION"), move |e| {
-                let _ = tx.send_blocking(e);
-            })
+            let mut m = Manager::new(
+                store,
+                Arc::new(UreqHttp::new()),
+                Catalog::default(),
+                env!("CARGO_PKG_VERSION"),
+                move |e| {
+                    let _ = tx.send_blocking(e);
+                },
+            );
+            m.set_self_update_target(packmule::selfupdate::target());
+            m
         },
         true,
     );
