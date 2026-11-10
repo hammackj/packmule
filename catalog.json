@@ -19,6 +19,16 @@
       },
       "reviews": [
         {
+          "tag": "v0.2.3",
+          "sha256": [
+            "eee1e9a74f08c56c19e2feb317edaa1a66ba6880eab9e9d315f26585f7c4f686"
+          ],
+          "date": "2026-11-09",
+          "claude": "pass",
+          "codex": "pass",
+          "report": "reviews/satchel/v0.2.3.md"
+        },
+        {
           "tag": "v0.2.2",
           "sha256": [
             "07a50e9b931c6822817379cd3e18effb246ed2dd910c89ae3c98cf938d9e86b1"
