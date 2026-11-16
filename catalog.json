@@ -2,22 +2,32 @@
   "version": 1,
   "addons": [
     {
-      "id": "satchel",
-      "name": "Satchel",
-      "repo": "hammackj/satchel",
+      "id": "rucksack",
+      "name": "Rucksack",
+      "repo": "hammackj/rucksack",
       "category": "Bags & Inventory",
-      "description": "All your bags in one window, plus your bank anywhere, other characters' bags, item counts on tooltips, sell junk, item levels and upgrade arrows.",
+      "description": "All your bags in one window (formerly Satchel), plus your bank anywhere, other characters' bags, item counts on tooltips, sell junk, item levels and upgrade arrows.",
       "flavors": [
         "forever"
       ],
       "folders": [
-        "Satchel"
+        "Rucksack"
       ],
       "verified": {
         "date": "2026-11-09",
         "ciBuilds": true
       },
       "reviews": [
+        {
+          "tag": "v0.2.8",
+          "sha256": [
+            "3d3bfc4cfe48906bb8aa9787d59e4f4445bab6c3510e50d8d0c3a8ca4d6c114f"
+          ],
+          "date": "2026-11-16",
+          "claude": "pass",
+          "codex": "pass",
+          "report": "reviews/rucksack/v0.2.8.md"
+        },
         {
           "tag": "v0.2.4",
           "sha256": [
@@ -26,7 +36,7 @@
           "date": "2026-11-09",
           "claude": "pass",
           "codex": "pass",
-          "report": "reviews/satchel/v0.2.4.md"
+          "report": "reviews/rucksack/v0.2.4.md"
         },
         {
           "tag": "v0.2.3",
@@ -36,7 +46,7 @@
           "date": "2026-11-09",
           "claude": "pass",
           "codex": "pass",
-          "report": "reviews/satchel/v0.2.3.md"
+          "report": "reviews/rucksack/v0.2.3.md"
         },
         {
           "tag": "v0.2.2",
@@ -46,7 +56,7 @@
           "date": "2026-11-09",
           "claude": "pass",
           "codex": "pass",
-          "report": "reviews/satchel/v0.2.2.md"
+          "report": "reviews/rucksack/v0.2.2.md"
         },
         {
           "tag": "v0.2.1",
@@ -56,7 +66,7 @@
           "date": "2026-11-09",
           "claude": "pass",
           "codex": "pass",
-          "report": "reviews/satchel/v0.2.1.md"
+          "report": "reviews/rucksack/v0.2.1.md"
         },
         {
           "tag": "v0.2.0",
@@ -66,7 +76,7 @@
           "date": "2026-11-09",
           "claude": "pass",
           "codex": "pass",
-          "report": "reviews/satchel/v0.2.0.md"
+          "report": "reviews/rucksack/v0.2.0.md"
         }
       ]
     },
