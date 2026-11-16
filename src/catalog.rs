@@ -217,7 +217,7 @@ mod tests {
         assert!(c.entries().len() >= 20, "only {} entries", c.entries().len());
         let spoken = c.entry("spoken").unwrap();
         assert_eq!(spoken.tag_prefix.as_deref(), Some("spoken/"));
-        assert_eq!(c.entry("satchel").unwrap().folders.first().map(String::as_str), Some("Satchel"));
+        assert_eq!(c.entry("rucksack").unwrap().folders.first().map(String::as_str), Some("Rucksack"));
     }
 
     #[test]
@@ -233,7 +233,7 @@ mod tests {
 
     #[test]
     fn review_status() {
-        let mut e = Catalog::default().entry("satchel").unwrap().clone();
+        let mut e = Catalog::default().entry("rucksack").unwrap().clone();
         let review = |tag: &str, sha: &str, claude: &str, codex: &str| Review {
             tag: tag.into(),
             sha256: vec![sha.into()],
